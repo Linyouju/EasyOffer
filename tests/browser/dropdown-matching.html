@@ -1,0 +1,185 @@
+<!doctype html><meta charset="utf-8"><title>下拉匹配规则与「其他」兜底回归</title>
+<style>
+body{font:15px system-ui;margin:0}
+.section{display:grid;grid-template-columns:220px 1fr;gap:24px;padding:20px}
+.section-head{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:500}
+.dot{width:7px;height:7px;border-radius:50%;background:#4b7bd8;display:inline-block}
+.record{border-top:1px solid #e6e6e6;padding:16px 0}
+.record:first-child{border-top:0}
+.record-head{color:#9aa0a6;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.field{margin:10px 0}
+.field label{display:block;margin-bottom:6px}
+.req{color:#e5453b;font-style:normal}
+select,input{width:100%;padding:9px;border:1px solid #dcdfe6;border-radius:4px;color:#606266}
+#audit{white-space:pre-wrap;background:#f4f5f7;padding:14px;margin:20px;font:12px/1.6 ui-monospace}
+/* #unit 只是挪到视口外，不能 display:none —— 否则控件不可见，
+   isVisibleControl 会拒绝它们，兜底逻辑就找不到说明框了。 */
+#unit{position:absolute;left:-9999px;top:0;width:600px}
+</style>
+<h1 style="font:16px system-ui;margin:20px">下拉匹配规则与「其他」兜底（虚构资料）</h1>
+<button id="run" style="margin:0 20px">开始检查</button><pre id="audit">待运行</pre>
+
+<!-- A/B 部分的静态控件：被写进 #unit 并 display:none 隐藏，仅当单元测试目标。
+     注意不能真的隐藏，否则 isVisibleControl 会拒绝；改用宽高 0 的容器但保持可见性。 -->
+<section id="unit" style="position:absolute;left:-9999px;top:0;width:600px"></section>
+
+<!-- C 部分：真实获奖区块，走 agent 全流程 -->
+<section class="section">
+  <div class="section-head"><span class="title">获奖信息</span><i class="dot"></i></div>
+  <div class="section-body">
+    <label><input type="checkbox" id="none"> 无获奖信息</label>
+    <div class="record" id="awardBlock1">
+      <div class="record-head">获奖信息-1</div>
+      <div class="grid">
+        <div class="field"><label><i class="req">*</i> 获奖类型</label><select id="type1"><option value="">请选择</option><option>竞赛获奖</option><option>科技创新</option></select></div>
+        <div class="field"><label><i class="req">*</i> 奖项名称</label><select id="name1"><option value="">请选择</option><option>其他</option></select></div>
+      </div>
+      <div class="field"><label>奖项说明</label><input id="desc1" placeholder="请输入"></div>
+    </div>
+    <div class="record" id="awardBlock2">
+      <div class="record-head">获奖信息-2</div>
+      <div class="grid">
+        <div class="field"><label><i class="req">*</i> 获奖类型</label><select id="type2"><option value="">请选择</option><option>竞赛获奖</option><option>竞赛奖项</option><option>科技创新</option></select></div>
+        <div class="field"><label><i class="req">*</i> 奖项名称</label><select id="name2"><option value="">请选择</option><option>其他</option></select></div>
+      </div>
+      <div class="field"><label>奖项说明</label><input id="desc2" placeholder="请输入"></div>
+    </div>
+  </div>
+</section>
+
+<script>
+/* 单元测试用的控件：挂在 #unit 里，位置在视口外但仍然「可见」
+   （isVisibleControl 只看尺寸与 display，left:-9999px 不会让它变成不可见）。 */
+const unit=document.getElementById('unit');
+function mountUnit(id,labelText,options){
+  const wrap=document.createElement('div');wrap.className='form-item';wrap.id='wrap-'+id;
+  const lab=document.createElement('label');lab.textContent=labelText;wrap.appendChild(lab);
+  const el=document.createElement('select');el.id=id;
+  for(const text of options){
+    const o=document.createElement('option');
+    if(text==='请选择'){o.value='';o.textContent='请选择';}else{o.textContent=text;}
+    el.appendChild(o);
+  }
+  wrap.appendChild(el);unit.appendChild(wrap);
+  return {wrap,el};
+}
+// 奖项名称 + 同区块的空说明框（验证「其他」兜底能把真值写进说明框）
+const uAwardType=mountUnit('u-type','奖项类型',['请选择','竞赛获奖','科技创新']).el;
+const uAward=mountUnit('u-name','奖项名称',['请选择','其他']);
+const uAwardName=uAward.el;
+const uDescLabel=document.createElement('label');uDescLabel.textContent='奖项说明';
+const uDesc=document.createElement('input');uDesc.id='u-desc';uDesc.placeholder='请输入';
+uAward.wrap.appendChild(uDescLabel);uAward.wrap.appendChild(uDesc);
+// 身份类字段：学历下拉里有「其他」，但必须永远不被兜底逻辑使用
+const uDegree=mountUnit('u-degree','学历',['请选择','本科','硕士','其他']).el;
+
+const selected=el=>el&&el.selectedOptions[0]?el.selectedOptions[0].textContent.trim():'';
+const bank=[];
+const fact=(id,label,value,kind='text')=>bank.push({id,label,value,kind,allowRewrite:false});
+const awardNames=['甲等奖项','乙等奖项'];
+awardNames.forEach((name,i)=>{
+  fact(`award.${i}.name`,'奖项或竞赛全称',name);
+  fact(`award.${i}.field_AWARD_0${i+1}_1`,'奖项类型',i?'竞赛':'竞赛');
+  fact(`award.${i}.level`,'奖项等级',i?'二等奖':'一等奖');
+  fact(`award.${i}.description`,'获奖说明',name+'的获奖说明。');
+});
+const synonyms={'奖项名称':'奖项或竞赛全称','奖项类型':'奖项类型'};
+const lookup=(prefix,label)=>bank.find(b=>b.id.startsWith(prefix)&&(b.label===label||b.label===synonyms[label]));
+const listeners=[];
+window.chrome={runtime:{onMessage:{addListener:f=>listeners.push(f),removeListener:()=>{}},sendMessage:async msg=>{
+  if(msg.type==='OJT_AGENT_RESUME')return {resume:false};
+  if(msg.type==='OJT_VERSION')return {version:'3.0.0'};
+  if(msg.type!=='MAP_FORM_FIELDS')return {ok:true};
+  const mappings=(msg.payload.fields||[]).flatMap(f=>{const s=lookup(f.prefix||'',f.label);return s?[{fieldId:f.id,sourceId:s.id,confidence:.99}]:[]});
+  return {ok:true,threshold:.92,mappings};
+}},storage:{local:{get:async()=>({knowledgeLibrary:{authority:{active:true,bank}},experiences:{}})}}};
+</script>
+<script src="../../integrations/openjobtracker/ui-icons.js"></script><script src="../../integrations/openjobtracker/job-validator.js"></script><script src="../../integrations/openjobtracker/semantic-mapper.js"></script><script src="../../integrations/openjobtracker/content.js"></script><script src="../../integrations/openjobtracker/application-agent.js"></script><script src="../../integrations/openjobtracker/agent-dom.js"></script>
+<script>
+const core=window.OJTFormCore;
+const checks=[];
+const check=(name,ok)=>checks.push([name,ok]);
+
+/* ---------- A. 匹配规则：完全相等 → 收紧的互相包含（唯一命中） ---------- */
+const EMPTY='请选择';
+const scratch=[];
+// 每个测试用下拉都带一个空的「请选择」首项，和真实表单一致；
+// 否则原生 select 会自动选中第一项，无法区分「填上了」和「没填」。
+const mk=(options)=>{const s=document.createElement('select');const e=document.createElement('option');e.value='';e.textContent=EMPTY;s.appendChild(e);for(const t of options){const o=document.createElement('option');o.textContent=t;s.appendChild(o);}document.body.appendChild(s);scratch.push(s);return s;};
+
+{
+  const s=mk(['竞赛获奖','科技创新']);
+  check('前缀包含：「竞赛」能填进「竞赛获奖」',core.fillSelect(s,'竞赛')&&selected(s)==='竞赛获奖');
+}
+{
+  const s=mk(['竞赛获奖','竞赛奖项']);
+  check('唯一性：命中多个时宁可不填',!core.fillSelect(s,'竞赛')&&selected(s)===EMPTY);
+}
+{
+  const s=mk(['三等奖']);
+  check('后缀包含：「浙江省三等奖」能填进「三等奖」',core.fillSelect(s,'浙江省三等奖')&&selected(s)==='三等奖');
+}
+{
+  const s=mk(['本科及以上']);
+  check('长度差 3 字仍然匹配：「本科」→「本科及以上」',core.fillSelect(s,'本科')&&selected(s)==='本科及以上');
+}
+{
+  const s=mk(['设计']);
+  check('收紧后不再误配：短词不再命中长目标（宽松 includes 会误中）',!core.fillSelect(s,'全国高校数字艺术设计大赛')&&selected(s)===EMPTY);
+}
+{
+  const s=mk(['省市级','国家级']);
+  check('既非前缀也非后缀时不匹配',!core.fillSelect(s,'省区级')&&selected(s)===EMPTY);
+}
+{
+  const s=mk(['一等奖','二等奖','三等奖']);
+  check('完全相等优先于包含',core.fillSelect(s,'二等奖')&&selected(s)==='二等奖');
+}
+
+/* ---------- B. 「其他」兜底：只给获奖/竞赛类 ---------- */
+(async()=>{
+  // 身份类字段禁止：学历下拉里有「其他」，但绝不能被选中
+  const degreeBefore=selected(uDegree);
+  const refused=await core.writeOtherFallback(uDegree,'博士');
+  check('红线：学历下拉即使有「其他」也绝不选它',refused===null&&selected(uDegree)===degreeBefore&&selected(uDegree)===EMPTY);
+
+  // 获奖类字段允许：选中「其他」并把真值写进同区块的说明框
+  const done=await core.writeOtherFallback(uAwardName,'甲等奖项（一等奖）');
+  check('获奖类字段：选中「其他」',selected(uAwardName)==='其他');
+  check('获奖类字段：真值写进同区块说明框',uDesc.value==='甲等奖项（一等奖）');
+  check('兜底成功时返回被写入的说明框',done&&done.detailEl===uDesc);
+
+  // 没有说明框可写时，宁可留空也不丢真值
+  const orphan=mk(['其他']);
+  const noBox=await core.writeOtherFallback(orphan,'孤例奖项');
+  check('没有说明框时不做兜底（不丢真值）',noBox===null&&selected(orphan)===EMPTY);
+
+  /* ---------- C. 全流程：真实获奖区块 ----------
+     先把单元测试留下的控件全部移除：它们带「奖项类型/奖项名称」这类标签，
+     留着会被 agent 当成真实字段一起识别，污染获奖记录的区块归属判断。 */
+  scratch.forEach(el=>el.remove());
+  unit.remove();
+  const v=el=>el&&el.tagName==='SELECT'?selected(el):el.value;
+  ApplicationAgent.Runner.prototype.emit=function(message,extra){
+    if(!['blocked','done','stopped'].includes(this.status))return;
+    const missing=extra?.missing||[];
+    check('全流程：获奖类型 按「竞赛」→「竞赛获奖」填入',v(document.querySelector('#type1'))==='竞赛获奖');
+    check('全流程：奖项名称 落到「其他」',v(document.querySelector('#name1'))==='其他');
+    check('全流程：说明框补上奖项全称与等级',/甲等奖项/.test(v(document.querySelector('#desc1')))&&/一等奖/.test(v(document.querySelector('#desc1'))));
+    check('全流程：命中多个选项的区块不猜（区块2 获奖类型留空）',v(document.querySelector('#type2'))==='请选择');
+    check('全流程：区块2 仍然走「其他」兜底并补说明',v(document.querySelector('#name2'))==='其他'&&/乙等奖项/.test(v(document.querySelector('#desc2'))));
+    // 「其他」不是资料库里的原名；若不特殊处理，下一轮识别会把它当成「页面已有一条对不上的经历」，
+    // 于是把整块锁死（连下一页都进不去）。写入时记下归属即可避免这个自锁。
+    check('全流程：兜底写入「其他」后不再误判为「已有经历名称与资料库不一致」',!missing.some(m=>/不一致/.test(m)));
+    check('全流程：未点击保存或提交',!document.querySelector('button[type=submit]'));
+    audit.textContent=checks.map(([name,ok])=>(ok?'PASS ':'FAIL ')+name).join('\n');
+  };
+  listeners.forEach(f=>f({type:'START_APPLICATION_AGENT'},{},()=>{}));
+  // 兜底也把「其他」当成功，因此不应该再出现在未填清单里
+  setTimeout(()=>{
+    if(!/全流程/.test(audit.textContent))audit.textContent=checks.map(([n,ok])=>(ok?'PASS ':'FAIL ')+n).join('\n');
+  },3000);
+})();
+run.onclick=()=>listeners.forEach(f=>f({type:'START_APPLICATION_AGENT'},{},()=>{}));
+</script>

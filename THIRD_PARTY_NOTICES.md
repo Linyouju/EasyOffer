@@ -1,0 +1,93 @@
+# Third-party notices
+
+EasyOffer retains the MIT license of OpenJobTracker. The local workbench uses React, Radix UI, shadcn-style components, Lucide and Tailwind; dependency notices are retained below. Package lockfiles pin the build dependencies.
+
+- SheetJS CE 0.18.5: Apache-2.0, `vendor/sheetjs/LICENSE`, provenance and checksum in `vendor/sheetjs/provenance.json`.
+- PDF.js: Apache-2.0, `integrations/openjobtracker/vendor/PDFJS-LICENSE`.
+- JSZip: MIT (chosen license), `integrations/openjobtracker/vendor/JSZIP-LICENSE`.
+- JobPulse-Extension commit `7c458f76e80adab28582129f2a81cbfcb92e1b03`: general ideas only (central status rules, structured tool feedback, failure retention). No source copied or translated; no Python or Feishu dependency introduced.
+
+- shadcn/ui component sources: MIT, copyright 2023 shadcn; retained in `licenses/shadcn-ui-LICENSE`. Upstream license: https://github.com/shadcn-ui/ui/blob/main/LICENSE.md (checked 2026-09-23).
+
+## Workbench and build dependencies
+
+- @floating-ui/core 1.8.0 — MIT: `licenses/floating-ui--core-LICENSE`
+- @floating-ui/dom 1.8.0 — MIT: `licenses/floating-ui--dom-LICENSE`
+- @floating-ui/react-dom 2.1.9 — MIT: `licenses/floating-ui--react-dom-LICENSE`
+- @floating-ui/utils 0.2.12 — MIT: `licenses/floating-ui--utils-LICENSE`
+- @jridgewell/gen-mapping 0.3.13 — MIT: `licenses/jridgewell--gen-mapping-LICENSE`
+- @jridgewell/remapping 2.3.5 — MIT: `licenses/jridgewell--remapping-LICENSE`
+- @jridgewell/resolve-uri 3.1.2 — MIT: `licenses/jridgewell--resolve-uri-LICENSE`
+- @jridgewell/sourcemap-codec 1.6.0 — MIT: `licenses/jridgewell--sourcemap-codec-LICENSE`
+- @jridgewell/trace-mapping 0.3.31 — MIT: `licenses/jridgewell--trace-mapping-LICENSE`
+- @parcel/watcher 2.5.1 — MIT: `licenses/parcel--watcher-LICENSE`
+- @parcel/watcher-darwin-arm64 2.5.1 — MIT: `licenses/parcel--watcher-darwin-arm64-LICENSE`
+- @radix-ui/primitive 1.1.7 — MIT: `licenses/radix-ui--primitive-LICENSE`
+- @radix-ui/react-arrow 1.1.15 — MIT: `licenses/radix-ui--react-arrow-LICENSE`
+- @radix-ui/react-collection 1.1.15 — MIT: `licenses/radix-ui--react-collection-LICENSE`
+- @radix-ui/react-compose-refs 1.1.5 — MIT: `licenses/radix-ui--react-compose-refs-LICENSE`
+- @radix-ui/react-context 1.2.2 — MIT: `licenses/radix-ui--react-context-LICENSE`
+- @radix-ui/react-dialog 1.1.23 — MIT: `licenses/radix-ui--react-dialog-LICENSE`
+- @radix-ui/react-direction 1.1.4 — MIT: `licenses/radix-ui--react-direction-LICENSE`
+- @radix-ui/react-dismissable-layer 1.1.19 — MIT: `licenses/radix-ui--react-dismissable-layer-LICENSE`
+- @radix-ui/react-dropdown-menu 2.1.24 — MIT: `licenses/radix-ui--react-dropdown-menu-LICENSE`
+- @radix-ui/react-focus-guards 1.1.6 — MIT: `licenses/radix-ui--react-focus-guards-LICENSE`
+- @radix-ui/react-focus-scope 1.1.16 — MIT: `licenses/radix-ui--react-focus-scope-LICENSE`
+- @radix-ui/react-id 1.1.4 — MIT: `licenses/radix-ui--react-id-LICENSE`
+- @radix-ui/react-menu 2.1.24 — MIT: `licenses/radix-ui--react-menu-LICENSE`
+- @radix-ui/react-popper 1.3.7 — MIT: `licenses/radix-ui--react-popper-LICENSE`
+- @radix-ui/react-portal 1.1.17 — MIT: `licenses/radix-ui--react-portal-LICENSE`
+- @radix-ui/react-presence 1.1.10 — MIT: `licenses/radix-ui--react-presence-LICENSE`
+- @radix-ui/react-primitive 2.1.10 — MIT: `licenses/radix-ui--react-primitive-LICENSE`
+- @radix-ui/react-roving-focus 1.1.19 — MIT: `licenses/radix-ui--react-roving-focus-LICENSE`
+- @radix-ui/react-slot 1.3.3 — MIT: `licenses/radix-ui--react-slot-LICENSE`
+- @radix-ui/react-tabs 1.1.21 — MIT: `licenses/radix-ui--react-tabs-LICENSE`
+- @radix-ui/react-use-callback-ref 1.1.4 — MIT: `licenses/radix-ui--react-use-callback-ref-LICENSE`
+- @radix-ui/react-use-controllable-state 1.2.6 — MIT: `licenses/radix-ui--react-use-controllable-state-LICENSE`
+- @radix-ui/react-use-effect-event 0.0.5 — MIT: `licenses/radix-ui--react-use-effect-event-LICENSE`
+- @radix-ui/react-use-is-hydrated 0.1.3 — MIT: `licenses/radix-ui--react-use-is-hydrated-LICENSE`
+- @radix-ui/react-use-layout-effect 1.1.4 — MIT: `licenses/radix-ui--react-use-layout-effect-LICENSE`
+- @radix-ui/react-use-rect 1.1.4 — MIT: `licenses/radix-ui--react-use-rect-LICENSE`
+- @radix-ui/react-use-size 1.1.4 — MIT: `licenses/radix-ui--react-use-size-LICENSE`
+- @radix-ui/rect 1.1.3 — MIT: `licenses/radix-ui--rect-LICENSE`
+- @tailwindcss/cli 4.3.3 — MIT: `licenses/tailwindcss--cli-LICENSE`
+- @tailwindcss/node 4.3.3 — MIT: `licenses/tailwindcss--node-LICENSE`
+- @tailwindcss/oxide 4.3.3 — MIT: `licenses/tailwindcss--oxide-LICENSE`
+- @tailwindcss/oxide-darwin-arm64 4.3.3 — MIT: `licenses/tailwindcss--oxide-darwin-arm64-LICENSE`
+- aria-hidden 1.2.6 — MIT: `licenses/aria-hidden-LICENSE`
+- braces 3.0.3 — MIT: `licenses/braces-LICENSE`
+- class-variance-authority 0.7.1 — Apache-2.0: `licenses/class-variance-authority-LICENSE`
+- clsx 2.1.1 — MIT: `licenses/clsx-LICENSE`
+- detect-libc 1.0.3 — Apache-2.0: `licenses/detect-libc-LICENSE`
+- detect-node-es 1.1.0 — MIT: `licenses/detect-node-es-LICENSE`
+- enhanced-resolve 5.25.1 — MIT: `licenses/enhanced-resolve-LICENSE`
+- esbuild 0.25.12 — MIT: `licenses/esbuild-LICENSE`
+- fill-range 7.1.1 — MIT: `licenses/fill-range-LICENSE`
+- get-nonce 1.0.1 — MIT: `licenses/get-nonce-LICENSE`
+- graceful-fs 4.2.11 — ISC: `licenses/graceful-fs-LICENSE`
+- is-extglob 2.1.1 — MIT: `licenses/is-extglob-LICENSE`
+- is-glob 4.0.3 — MIT: `licenses/is-glob-LICENSE`
+- is-number 7.0.0 — MIT: `licenses/is-number-LICENSE`
+- jiti 2.7.0 — MIT: `licenses/jiti-LICENSE`
+- lightningcss 1.32.0 — MPL-2.0: `licenses/lightningcss-LICENSE`
+- lightningcss-darwin-arm64 1.32.0 — MPL-2.0: `licenses/lightningcss-darwin-arm64-LICENSE`
+- lucide-react 0.468.0 — ISC: `licenses/lucide-react-LICENSE`
+- magic-string 0.30.21 — MIT: `licenses/magic-string-LICENSE`
+- micromatch 4.0.8 — MIT: `licenses/micromatch-LICENSE`
+- mri 1.2.0 — MIT: `licenses/mri-LICENSE`
+- node-addon-api 7.1.1 — MIT: `licenses/node-addon-api-LICENSE`
+- picocolors 1.1.1 — ISC: `licenses/picocolors-LICENSE`
+- picomatch 2.3.2 — MIT: `licenses/picomatch-LICENSE`
+- react 19.3.0 — MIT: `licenses/react-LICENSE`
+- react-dom 19.3.0 — MIT: `licenses/react-dom-LICENSE`
+- react-remove-scroll 2.7.2 — MIT: `licenses/react-remove-scroll-LICENSE`
+- react-style-singleton 2.2.3 — MIT: `licenses/react-style-singleton-LICENSE`
+- scheduler 0.28.0 — MIT: `licenses/scheduler-LICENSE`
+- source-map-js 1.2.1 — BSD-3-Clause: `licenses/source-map-js-LICENSE`
+- tailwind-merge 3.7.0 — MIT: `licenses/tailwind-merge-LICENSE`
+- tailwindcss 4.3.3 — MIT: `licenses/tailwindcss-LICENSE`
+- tapable 2.3.3 — MIT: `licenses/tapable-LICENSE`
+- to-regex-range 5.0.1 — MIT: `licenses/to-regex-range-LICENSE`
+- tslib 2.8.1 — 0BSD: `licenses/tslib-LICENSE`
+- use-callback-ref 1.3.3 — MIT: `licenses/use-callback-ref-LICENSE`
+- use-sidecar 1.1.3 — MIT: `licenses/use-sidecar-LICENSE`

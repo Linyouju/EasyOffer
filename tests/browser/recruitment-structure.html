@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><title>招聘表单结构回归</title><style>body{font:16px system-ui}.field{margin:12px}input{padding:8px}#result{white-space:pre-wrap}</style>
+<section><div>教育经历 <b>必填</b><p>从最高学历填写到本科</p></div><div id="graduate"><div class="field"><label>学校名称：</label><div><span>研究生大学</span></div></div><div class="field"><label>所在实验室：</label><input id="lab"></div><div class="field"><label>期刊或论文名称：</label><input id="paper"></div></div></section>
+<section><div>学术成果</div><div class="field"><label>论文名称</label><input id="academic"></div></section>
+<section><div>项目经验</div><div class="field"><label>起止时间</label><div><input id="start" placeholder="请选择开始时间"></div><span>~</span><div><input id="end" placeholder="请选择结束时间"></div></div></section>
+<button id="run">检查结构</button><pre id="result">待检查</pre>
+<script>window.chrome={runtime:{onMessage:{addListener(){},removeListener(){}},sendMessage:async()=>({})},storage:{local:{get:async()=>({})}}};</script>
+<script src="../../integrations/openjobtracker/semantic-mapper.js"></script><script src="../../integrations/openjobtracker/content.js"></script>
+<script>run.onclick=()=>{const c=OJTFormCore;const checks=[['嵌套标题',c.formSection(lab)==='教育经历'],['学术区块边界',c.formSection(academic)==='学术成果'],['结束日期',/结束/.test(c.getFieldDescriptor(end))],['非输入学校锚点',c.recordDisplayAnchors([...document.querySelectorAll('input')]).some(r=>r.current==='研究生大学'&&r.recordType==='education')]];result.textContent=checks.map(([n,p])=>(p?'PASS ':'FAIL ')+n).join('\n')};</script>

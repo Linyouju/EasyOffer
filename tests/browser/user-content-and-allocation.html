@@ -1,0 +1,102 @@
+<!doctype html><meta charset="utf-8"><title>用户已有内容保留 / 空白区块分配 / 未知区块不被丢弃（P0-5 · P1-3 · P1-4）</title>
+<style>body{font:15px system-ui;margin:24px}#audit{white-space:pre-wrap;background:#f4f5f7;padding:16px;font:12px/1.7 ui-monospace}</style>
+<h1>已有内容保留 与 空白／未知区块处理</h1>
+<button id="run">开始检查</button><pre id="audit">待运行</pre>
+<div id="host"></div>
+
+<script src="../../integrations/openjobtracker/ui-icons.js"></script>
+<script src="../../integrations/openjobtracker/job-validator.js"></script>
+<script src="../../integrations/openjobtracker/semantic-mapper.js"></script>
+<!-- content.js 仅用于让运行器确认扩展脚本已加载；另用它的字段读写做「不覆盖」验证 -->
+<script src="../../integrations/openjobtracker/content.js"></script>
+<script>
+const M=()=>globalThis.SemanticMapper;
+const core=()=>globalThis.OJTFormCore;
+const pairs=[];const out=[];
+const check=(n,actual,expected)=>pairs.push([n,JSON.stringify(actual)===JSON.stringify(expected),actual,expected]);
+const rec=(id,label,value,kind='text')=>({id,label,value,kind,allowRewrite:false});
+
+function awardBank(){
+  return [
+    rec('award.0.name','奖项或竞赛全称','2026 未来设计师·全国高校数字艺术设计大赛'),
+    rec('award.0.date','获奖日期','2026-08-26','date'),
+    rec('award.0.level','奖项等级','三等奖'),
+    rec('award.0.description','获奖说明','国家级三等奖说明。'),
+    rec('award.1.name','奖项或竞赛全称','2026 未来设计师·全国高校数字艺术设计大赛江苏省赛'),
+    rec('award.1.date','获奖日期','2026-08-26','date'),
+    rec('award.1.level','奖项等级','二等奖'),
+    rec('award.1.description','获奖说明','省级二等奖说明。'),
+  ];
+}
+
+// 建一个真实 DOM 区块，返回 rows（结构与 record-binding-baseline 一致）
+function block(key,current){
+  const defs=[['竞赛名称',current.name??''],['竞赛时间',current.date??''],['所获奖项',current.level??''],['竞赛描述',current.desc??'']];
+  host.insertAdjacentHTML('beforeend',`<div id="${key}">`+defs.map((d,i)=>`<input id="${key}f${i}" value="${d[1]}">`).join('')+`</div>`);
+  return defs.map((d,i)=>({
+    id:key+'f'+i, label:d[0], current:d[1], el:document.getElementById(key+'f'+i),
+    section:'竞赛情况', recordType:'award', blockKey:key, prefix:'', scopeUnknown:true, anchor:(i===0),
+  }));
+}
+
+run.onclick=async()=>{
+  host.innerHTML='';
+
+  /* ===== P0-5 用户已有内容必须保留，但不能阻塞其他空字段 ===== */
+  {
+    const bank=awardBank();
+    const rows=block('u1',{name:'2026 未来设计师·全国高校数字艺术设计大赛'});
+    const before=document.getElementById('u1f0').value;
+    M().bindRecordGroups(rows,bank);
+    out.push('【P0-5】用户手动填了正确的竞赛名称，其余字段为空');
+    check('P0-5a 名称可作为匹配证据，识别出 AWARD-01', rows[0].prefix, 'award.0.');
+    // 用真实写入通道验证「不覆盖」：必须先等写入结束再判定，否则读到的是同步空值（假通过）
+    const el=document.getElementById('u1f0');
+    const another=bank.find(b=>b.id==='award.1.name');
+    const writeResult=await core().writeMappedField(el,another);
+    check('P0-5b 写入被拒绝（目标已有用户内容）', writeResult, false);
+    check('P0-5c 名称值写入前后一致', el.value, before);
+    check('P0-5d 其余空字段仍可继续填写（日期）', M().compatible(rows[1],{id:'award.0.date',label:'获奖日期'}), true);
+    check('P0-5e 其余空字段仍可继续填写（等级）', M().compatible(rows[2],{id:'award.0.level',label:'奖项等级'}), true);
+    check('P0-5f 其余空字段仍可继续填写（描述）', M().compatible(rows[3],{id:'award.0.description',label:'获奖说明'}), true);
+    check('P0-5g 不得因区块内有人工内容而停止整条记录', rows.some(r=>r.scopeUnknown), false);
+  }
+
+  /* ===== P1-3 完全空白区块：走 allocation，不应报错 ===== */
+  {
+    const bank=awardBank();
+    const rows=block('a1',{});
+    M().bindRecordGroups(rows,bank);
+    const reasons=rows.map(r=>r.scopeReason).filter(Boolean);
+    out.push('【P1-3】完全空白的竞赛区块，库里有未使用记录');
+    check('P1-3a 空白区块被安排到一条未占用记录', !!rows[0].prefix && /^award\.\d+\.$/.test(rows[0].prefix), true);
+    check('P1-3b 空白区块不会被判为身份未知', rows.some(r=>r.scopeUnknown), false);
+    check('P1-3c 空白区块不产生「缺少身份证据」之类的错误文案', reasons.some(r=>/名称为空|不一致|未确认身份/.test(r)), false);
+    // 目标行为（当前架构还没有 allocation 概念）：写出「这是分配而非识别」的标记
+    check('P1-3d【目标行为】绑定标记为 allocated（区分匹配与分配）', rows[0].mode, 'allocated');
+  }
+
+  /* ===== P1-4 未知区块不能被静默丢弃 ===== */
+  {
+    // 标题与字段都不在现有白名单里，但结构明显是一组经历
+    const rows=[
+      {id:'x0',label:'实践单位',current:'',section:'课外实践与任职',recordType:'',anchor:false,blockKey:'',prefix:'',scopeUnknown:true},
+      {id:'x1',label:'担任岗位',current:'',section:'课外实践与任职',recordType:'',anchor:false,blockKey:'',prefix:'',scopeUnknown:true},
+      {id:'x2',label:'起止年月',current:'',section:'课外实践与任职',recordType:'',anchor:false,blockKey:'',prefix:'',scopeUnknown:true},
+    ];
+    host.insertAdjacentHTML('beforeend',`<div id="x">${rows.map(r=>`<input id="${r.id}">`).join('')}</div>`);
+    rows.forEach(r=>{r.el=document.getElementById(r.id);});
+    M().bindRecordGroups(rows,awardBank());
+    out.push('【P1-4】标题「课外实践与任职」不在白名单，字段也无标准锚点');
+    // 当前实现：没有 recordType、没有 blockKey → 直接被 continue 跳过，什么都没留下
+    check('P1-4a 未知区块至少被保留为「待识别区块」', rows.every(r=>r.blockKey||r.pending||r.unresolved), true);
+    check('P1-4b【目标行为】存在 unresolvedBlocks 收集未知区块',
+      (globalThis.__ojtUnresolvedBlocks||[]).length>=1, true);
+    out.push('  当前 rows 状态：blockKey='+JSON.stringify(rows.map(r=>r.blockKey||'')) + '（全空即被静默丢弃）');
+  }
+
+  audit.textContent=out.join('\n')+'\n\n'
+    +pairs.map(([n,ok,actual,expected])=>
+        (ok?'PASS ':'FAIL ')+n+(ok?'':`  ← 实际 ${JSON.stringify(actual)} / 期望 ${JSON.stringify(expected)}`)).join('\n');
+};
+</script>

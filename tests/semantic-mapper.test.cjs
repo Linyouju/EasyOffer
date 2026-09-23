@@ -1,0 +1,36 @@
+const assert=require('node:assert/strict');
+const Mapper=require('../integrations/openjobtracker/semantic-mapper.js');
+const bank=Mapper.buildBank({userProfile:{phone:'PRIVATE-PHONE',idCard:'PRIVATE-ID'},customFields:[{label:'求职方向',keywords:'应聘职位,意向岗位',value:'交互设计'}],experiences:{project:[{name:'项目一',role:'交互设计',period:'2026.05 - 2026.09',description:'PRIVATE-RESUME'}]}});
+assert.equal(bank.find(x=>x.id==='project.0.start').value,'2026.05');
+assert.equal(bank.find(x=>x.id==='project.0.end').value,'2026.09');
+assert.deepEqual(Mapper.splitPeriod('2026-05-01 - 2026-09-01'),['2026-05-01','2026-09-01']);
+assert.deepEqual(Mapper.splitPeriod('2024.09 至 至今'),['2024.09','至今']);
+assert(!JSON.stringify(Mapper.metadata(bank)).includes('PRIVATE'));
+assert.deepEqual(Mapper.parseMappingResponse('Here is the mapping:\n```json\n[{"fieldId":"f0","sourceId":"profile.phone","confidence":0.99}]\n```'),[{fieldId:'f0',sourceId:'profile.phone',confidence:.99}]);
+assert.deepEqual(Mapper.parseMappingResponse('{"mappings":[]}'),[]);
+assert.throws(()=>Mapper.parseMappingResponse('[{"fieldId":'));
+const achievementFields=[{id:'a0',label:'项目业绩'}];
+const sourceBank=[{id:'project.0.description',value:'与产品和研发共同推进方案实现。'}];
+assert.equal(Mapper.validateMappings([{fieldId:'a0',sourceId:'project.0.description',confidence:.99,quotes:['提升转化率 30%']}],achievementFields,sourceBank,.92).length,0);
+assert.deepEqual(Mapper.validateMappings([{fieldId:'a0',sourceId:'project.0.description',confidence:.99,quotes:['与产品和研发共同推进方案实现。']}],achievementFields,sourceBank,.92)[0].quotes,['与产品和研发共同推进方案实现。']);
+const fields=[{id:'f0',label:'与您联系的号码',type:'tel'},{id:'f1',label:'项目职责',type:'text'}];
+let maps=Mapper.validateMappings([{fieldId:'f0',sourceId:'profile.phone',confidence:.98},{fieldId:'f1',sourceId:'project.0.role',confidence:.7}],fields,bank,.92);
+assert.equal(maps[0].accepted,true);assert.equal(maps[1].accepted,false);
+for(const bad of [NaN,-1,1.1,'0.99',null]) assert.equal(Mapper.validateMappings([{fieldId:'f0',sourceId:'profile.phone',confidence:bad}],fields,bank,.92).length,0);
+assert.equal(Mapper.validateMappings([{fieldId:'f0',sourceId:'invented',confidence:1},{fieldId:'f9',sourceId:'profile.phone',confidence:1}],fields,bank,.92).length,0);
+assert.equal(Mapper.validateMappings([{fieldId:'f0',sourceId:'profile.phone',confidence:1},{fieldId:'f0',sourceId:'profile.idCard',confidence:1}],fields,bank,.92).length,0);
+assert.equal(Mapper.threshold(.1),.92);assert.equal(Mapper.threshold(.97),.97);
+(async()=>{
+ let request;
+ const config={base_url:'https://example.invalid/v1/',api_key:'TESTKEY',model:'test',mapping_threshold:.92};
+ const result=await Mapper.requestMappings({fields,bank},config,async(url,options)=>{request=JSON.parse(options.body);assert.equal(url,'https://example.invalid/v1/chat/completions');return {ok:true,json:async()=>({choices:[{message:{content:'```json\n[{"fieldId":"f0","sourceId":"profile.phone","confidence":0.98}]\n```'}}]})};});
+ assert.equal(result.length,1);assert(!JSON.stringify(request).includes('PRIVATE'));assert(!JSON.stringify(request).includes('TESTKEY'));
+ await assert.rejects(()=>Mapper.requestMappings({fields,bank},config,async()=>({ok:false,status:503})));
+ await assert.rejects(()=>Mapper.requestMappings({fields,bank},config,async()=>({ok:true,json:async()=>({choices:[{message:{content:'not JSON'}}]})})));
+ const native=await Mapper.requestMappings({fields,bank},{...config,model:'claude-sonnet-test',base_url:'https://example.invalid'},async(url,options)=>{const body=JSON.parse(options.body);assert.equal(url,'https://example.invalid/v1/messages');assert(body.system);assert.equal(body.messages[0].role,'user');assert.equal(options.headers['anthropic-version'],'2023-06-01');return {ok:true,json:async()=>({content:[{type:'text',text:'[{"fieldId":"f0","sourceId":"profile.phone","confidence":0.98}]'}]})};});
+ assert.equal(native[0].accepted,true);
+ const alias=await Mapper.requestMappings({fields,bank},{...config,model:'claude',base_url:'https://example.invalid'},async(url,options)=>url.endsWith('/models')?{ok:true,json:async()=>({data:[{id:'claude-sonnet-4-6'},{id:'gpt-test'}]})}:{ok:true,json:async()=>({content:[{type:'text',text:'[{"fieldId":"f0","sourceId":"profile.phone","confidence":0.98}]'}]})});
+ assert.equal(alias.model,'claude-sonnet-4-6');
+
+ console.log('PASS: semantic mappings, thresholds, malformed/duplicate/unknown IDs, privacy, API failures, period splitting');
+})().catch(e=>{console.error(e);process.exitCode=1});

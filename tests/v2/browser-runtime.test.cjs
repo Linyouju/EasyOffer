@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict'),path=require('node:path');
+const {runtimeOptions,diagnose}=require('../../scripts/browser-runtime.cjs');
+const chromium={executablePath:()=>process.execPath},pkg=path.resolve('work/fixture-extension');
+const headed=runtimeOptions(chromium,pkg,{V2_HEADED:'1'});assert.equal(headed.headless,false);assert.equal(runtimeOptions(chromium,pkg,{}).headless,true);assert(headed.args.includes('--load-extension='+pkg));assert(!headed.args.some(x=>/no-sandbox|remote-debugging/.test(x)));
+assert.equal(diagnose(Error('bootstrap_check_in MachPortRendezvousServer Permission denied (1100)')).code,'BROWSER_ENVIRONMENT_DENIED');
+assert.equal(diagnose(Error('CHROMIUM_UNAVAILABLE')).code,'BROWSER_NOT_INSTALLED');
+assert.equal(headed.chromiumSandbox,true);
+assert.equal(diagnose(Error('Target closed SIGABRT'),'launch').code,'BROWSER_LAUNCH_FAILED');
+assert.equal(diagnose(Error('assertion failed')).code,'BROWSER_OR_FLOW_FAILURE');
+console.log('PASS browser test entry: headed/headless configuration, isolated extension, environment failure distinguished from flow failure');

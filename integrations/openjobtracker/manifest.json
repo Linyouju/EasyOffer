@@ -1,0 +1,102 @@
+{
+  "manifest_version": 3,
+  "name": "EasyOffer",
+  "version": "5.0.3",
+  "description": "智能网申助手：分析、填写、检查与资料库更新，最终由用户提交。",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "https://ark.cn-beijing.volces.com/*",
+    "https://*.zhaopin.com/*",
+    "https://*.51job.com/*",
+    "https://*.lagou.com/*",
+    "https://*.liepin.com/*",
+    "https://*.boss.com/*",
+    "https://*.zhipin.com/*",
+    "https://*.nowcoder.com/*",
+    "https://*.yingjiesheng.com/*",
+    "https://*.jobs.com/*",
+    "https://*.linkedin.com/*",
+    "https://*.workday.com/*",
+    "https://*.myworkdayjobs.com/*",
+    "https://*.icims.com/*",
+    "https://*.greenhouse.io/*",
+    "https://*.lever.co/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "options.html",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "EasyOffer"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.zhaopin.com/*",
+        "https://*.51job.com/*",
+        "https://*.lagou.com/*",
+        "https://*.liepin.com/*",
+        "https://*.zhipin.com/*",
+        "https://*.nowcoder.com/*",
+        "https://*.yingjiesheng.com/*",
+        "https://*.linkedin.com/*",
+        "https://*.myworkdayjobs.com/*",
+        "https://*.icims.com/*",
+        "https://*.greenhouse.io/*",
+        "https://*.lever.co/*"
+      ],
+      "js": [
+        "ui-icons.js",
+        "job-validator.js",
+        "v2/application-core.js",
+        "semantic-mapper.js",
+        "content.js",
+        "application-agent.js",
+        "v2/page-observer.js",
+        "v2/semantic-planner.js",
+        "v2/form-adapter.js",
+        "v2/page-runtime.js",
+        "agent-dom.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://autumn-career-desk-qpc.linyouju.chatgpt.site/*"
+      ],
+      "js": [
+        "desk-content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "投递记录模板.xlsx",
+        "icons/icon128.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}

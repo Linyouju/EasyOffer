@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');global.WorkbookLibrary=require('../../integrations/openjobtracker/workbook-library');const P=require('../../integrations/openjobtracker/v2/profile-core'),X=require('../../vendor/sheetjs/xlsx.full.min');
+const data={knowledgeLibrary:{authority:{active:true,sheets:[{name:'00说明',guide:[['保留说明']]},{name:'04工作',rows:[{record:'W1',label:'公司名称',value:'示例设计公司',status:'已确认',mode:'原样填写',address:'C5'},{record:'W1',label:'完整原始描述',value:'旧展示',status:'已确认',mode:'原样填写',address:'C6'},{record:'W1',label:'未知字段',value:'保留但未确认',status:'需核对',mode:'人工确认后填写',address:'C7'}]}],bank:[{id:'work.0.company',recordId:'W1',label:'公司名称',value:'示例设计公司',source:{sheet:'04工作',address:'C5',record:'W1'}},{id:'work.0.description',recordId:'W1',label:'完整原始描述',value:'已确认的完整原文。\n第二段不改写。',source:{sheet:'04工作',address:'C6',record:'W1'},kind:'longtext'},{id:'work.0.start',label:'开始日期',value:'2025-08-26',kind:'date'}]}}};
+const p=P.migrate(data);assert.equal(p.records.length,1);assert.equal(P.bank(p).length,3);assert.ok(P.bank(p).some(x=>x.value==='2025-08-26'));assert.equal(p.migrationWarnings.length,1);
+const f=p.records[0].fields.find(f=>f.key==='description'),id=f.id,bankId=P.bank(p).find(x=>x.fieldId===id).id;
+P.command(p,{operationId:'edit',changes:[{recordId:'W1',fieldId:id,baseRevision:f.revision,oldValue:f.value,patch:{value:'新原文，下一次直接使用。'}}]});assert.equal(P.bank(p).find(x=>x.fieldId===id).value,'新原文，下一次直接使用。');assert.equal(P.bank(p).find(x=>x.fieldId===id).id,bankId);
+const date=p.records[0].fields.find(f=>f.key==='start'),rev=date.revision;
+P.command(p,{operationId:'add',changes:[{recordId:'P2',addRecord:{type:'project'}},{recordId:'P2',newField:{key:'name',label:'项目名称',value:'新增项目'}}]});assert.equal(date.revision,rev,'unrelated addition never invalidates field revision');assert.equal(p.records[0].fields.find(x=>x.id===id).value,'新原文，下一次直接使用。');
+assert.throws(()=>P.command(p,{operationId:'stale',changes:[{recordId:'W1',fieldId:id,baseRevision:1,oldValue:'旧展示',patch:{value:'覆盖'}}]}),/变更/);
+const bytes=X.write(P.workbook(X,p),{type:'array',bookType:'xlsx'}),restored=P.readWorkbook(X,bytes,'roundtrip.xlsx');assert.deepEqual(P.diff(p,restored),[]);assert.equal(restored.records[0].fields.find(x=>x.id===date.id).value,'2025-08-26');assert.ok(restored.records[0].fields.some(f=>f.value==='保留但未确认'));assert.equal(restored.guides[0].name,'00说明');
+const lower=structuredClone(restored);lower.records[0].fields.find(x=>x.id===date.id).value='2025-08';assert.deepEqual(P.diff(p,lower),[]);
+P.undo(p,'edit');assert.equal(p.records[0].fields.find(x=>x.id===id).value,'已确认的完整原文。\n第二段不改写。');assert.ok(p.records.some(r=>r.id==='P2'),'undo leaves unrelated additions');
+P.undo(p,'add');assert.ok(!p.records.some(r=>r.id==='P2'));assert.equal(P.command(p,{operationId:'add',changes:[]}).changed,2,'operation idempotency');
+const wb=P.workbook(X,restored);const rows=X.utils.sheet_to_json(wb.Sheets['04工作'],{header:1,defval:''});[rows[4],rows[5]]=[rows[5],rows[4]];wb.Sheets['04工作']=X.utils.aoa_to_sheet(rows);const reordered=P.readWorkbook(X,X.write(wb,{type:'array',bookType:'xlsx'}));assert.deepEqual(P.diff(restored,reordered),[],'row order preserves IDs');
+console.log('PASS Profile: migrate effective supplements, original text, stable IDs, field revisions, conflicts, diff, undo, XLSX precision/rules/unknown fields/row reordering');
+
+{const {library}=require('./data.cjs');const migrated=P.migrate({knowledgeLibrary:{authority:library}});assert.equal(migrated.records.length,2);assert.equal(P.bank(migrated).length,10);}
+
+assert.equal(P.lowerPrecision('2025-08-26','2025-07'),true,'different month does not authorize discarding confirmed day precision');

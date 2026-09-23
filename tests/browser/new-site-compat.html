@@ -1,0 +1,85 @@
+<!doctype html><meta charset="utf-8"><title>陌生新站点兼容性回归</title>
+<style>body{font:15px system-ui;margin:20px}.field{margin:10px 0}label{display:block;margin-bottom:6px}
+input,textarea{width:70%;padding:8px;border:1px solid #dcdfe6;border-radius:4px}
+.fake-combo{position:relative;width:70%}.fake-combo ul{list-style:none;margin:0;padding:0;border:1px solid #ccc;width:100%}
+.fake-combo li{padding:8px;cursor:pointer}.fake-combo li:hover{background:#eef}
+#audit{white-space:pre-wrap;background:#f4f5f7;padding:14px;font:12px/1.6 ui-monospace;margin-top:20px}
+</style>
+<h1 style="font:16px system-ui">陌生校招页兼容性（虚构资料）</h1>
+<button id="run">开始检查</button><pre id="audit">待运行</pre>
+
+<section>
+  <h2>社团与实践经历</h2>
+  <div class="record">
+    <div class="field"><label>活动名称</label><input id="actName"></div>
+    <div class="field"><label>担任职务</label><input id="actRole"></div>
+    <div class="field"><label>描述</label><textarea id="actDesc"></textarea></div>
+    <div class="field"><label>活动类型</label>
+      <div class="fake-combo" role="combobox" aria-haspopup="listbox">
+        <input id="actType" type="search" placeholder="请选择" readonly>
+        <ul hidden><li role="option">志愿公益</li><li role="option">文体活动</li><li role="option">学术科技</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>个人信息</h2>
+  <div class="field"><label>补充一</label><input id="s1"></div>
+  <div class="field"><label>补充二</label><input id="s2"></div>
+  <div class="field"><label>补充三</label><input id="s3"></div>
+  <div class="field"><label>补充四</label><input id="s4"></div>
+</section>
+
+<script>
+const bank=[];
+const fact=(id,label,value,kind='text')=>bank.push({id,label,value,kind,allowRewrite:false});
+fact('campus.0.name','活动名称','志愿活动甲');
+fact('campus.0.role','担任职务','组长');
+fact('campus.0.description','描述','组织了三场社区服务活动。');
+fact('campus.0.fieldtype','活动类型','志愿公益');
+for(const i of [1,2,3,4])fact('profile.extra'+i,'补充'+['一','二','三','四'][i-1],'回答'+i);
+const answers={'补充一':'回答1','补充二':'回答2','补充三':'回答3','补充四':'回答4'};
+
+const actType=document.getElementById('actType');
+const combo=actType.parentElement;
+actType.addEventListener('click',()=>{combo.querySelector('ul').hidden=false;});
+actType.addEventListener('focus',()=>{combo.querySelector('ul').hidden=false;});
+combo.querySelectorAll('li').forEach(li=>li.addEventListener('click',()=>{actType.value=li.textContent.trim();combo.querySelector('ul').hidden=true;}));
+
+const listeners=[];
+window.chrome={runtime:{onMessage:{addListener:f=>listeners.push(f),removeListener:()=>{}},sendMessage:async msg=>{
+  if(msg.type==='OJT_AGENT_RESUME')return {resume:false};
+  if(msg.type==='OJT_VERSION')return {version:'2.1.0'};
+  if(msg.type!=='MAP_FORM_FIELDS')return {ok:true};
+  const fields=msg.payload.fields||[];window.__aiCalls=(window.__aiCalls||0)+1;
+  window.__aiSizes=(window.__aiSizes||[]).concat(fields.length);
+  if(fields.length>=3)return {ok:false,error:'AI 返回格式无效'};
+  return {ok:true,threshold:.92,mappings:fields.flatMap(f=>{
+    const answer=answers[f.label];
+    const source=answer?bank.find(b=>b.value===answer):null;
+    return source?[{fieldId:f.id,sourceId:source.id,confidence:.99}]:[];
+  })};
+}},storage:{local:{get:async()=>({knowledgeLibrary:{authority:{active:true,bank}},experiences:{}})}}};
+const open=window.open;window.open=open;
+</script>
+<script src="../../integrations/openjobtracker/ui-icons.js"></script><script src="../../integrations/openjobtracker/job-validator.js"></script><script src="../../integrations/openjobtracker/semantic-mapper.js"></script><script src="../../integrations/openjobtracker/content.js"></script><script src="../../integrations/openjobtracker/application-agent.js"></script><script src="../../integrations/openjobtracker/agent-dom.js"></script>
+<script>
+ApplicationAgent.Runner.prototype.emit=function(message,extra){
+  if(!['blocked','done','stopped'].includes(this.status))return;
+  const v=s=>document.getElementById(s).value;
+  const missing=extra?.missing||[];
+  const checks=[
+    ['白名单外区段标题仍能识别活动名称',v('actName')==='志愿活动甲'],
+    ['社团记录字段归属正确',v('actRole')==='组长'],
+    ['记录描述按资料库填写',v('actDesc')==='组织了三场社区服务活动。'],
+    ['input[type=search] 下拉被识别并选中',v('actType')==='志愿公益'],
+    ['AI 整批失败改为拆半重试',['s1','s2','s3','s4'].every(id=>v(id).startsWith('回答'))],
+    ['拆半重试产生了多次调用',(window.__aiCalls||0)>=3&&(window.__aiSizes||[]).includes(4)],
+    ['已填字段不再出现在未填原因',!missing.some(m=>/活动名称|担任职务|活动类型|描述/.test(m))],
+    ['未点击提交',!document.querySelector('button[type=submit]')]
+  ];
+  audit.textContent=checks.map(([name,ok])=>(ok?'PASS ':'FAIL ')+name).join('\n');
+};
+run.onclick=()=>listeners.forEach(f=>f({type:'START_APPLICATION_AGENT'},{},()=>{}));
+</script>

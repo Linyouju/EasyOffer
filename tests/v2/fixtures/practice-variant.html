@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><title>示例招聘表单</title>
+<style>body{font:16px sans-serif;margin:40px}article{padding:16px;border:1px solid #aaa;margin:20px}label{display:block;margin:14px}input,textarea{display:block;width:400px}li{cursor:pointer}#options{border:1px solid #aaa}</style>
+<main><h1>课外探索记录</h1><p>可记录在课程、社群或个人研究中完成的设计课题。此处不收集公司任职。用两个段落分别交代自己做了什么，以及问题背景和实际交付。</p><div id="records"></div><button id="add">新增经历</button><button id="submit">提交申请</button><label><input type="checkbox" id="terms">我同意隐私协议</label></main>
+<script>
+let count=0;window.submissions=0;window.added=0;
+function add(){const i=++count;records.insertAdjacentHTML('beforeend',`<article data-record id="record${i}"><h2>实践 ${i}</h2><label>课题题名<input name="name${i}" required></label><label>我在其中的分工<input name="role${i}" role="combobox" aria-haspopup="listbox" readonly required></label><ul id="options${i}" hidden><li role="option">UX设计</li><li role="option">交互设计</li></ul><label>收尾于<input name="end${i}" type="date" required></label><label>启动于<input name="start${i}" type="date" required></label><label>个人承担的部分<textarea name="duties${i}" required></textarea></label><label>课题由来与交付<textarea name="description${i}" required></textarea></label></article>`);const input=document.querySelector(`[name=role${i}]`),menu=document.getElementById('options'+i);input.onclick=()=>menu.hidden=false;menu.onclick=e=>{if(e.target.getAttribute('role')==='option'){input.value=e.target.textContent;input.dispatchEvent(new Event('change',{bubbles:true}));menu.hidden=true;}};}
+add();document.getElementById('add').onclick=()=>{window.added++;add();};submit.onclick=()=>window.submissions++;
+</script>

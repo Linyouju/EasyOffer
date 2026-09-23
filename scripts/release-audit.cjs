@@ -1,0 +1,6 @@
+const fs=require('node:fs'),path=require('node:path');
+// Report paths/rule names only: never echo matched personal data or credentials.
+const rules=[['machine-path',/\/Users\/[\w.-]+\//],['credential',/(?:sk-[a-zA-Z0-9_-]{24,}|(?:api_key|apiKey)\s*[=:]\s*["'][^"'\s]{18,}["'])/]];
+function auditDirectory(dir){const privateMarkers=process.env.EASYOFFER_PRIVATE_MARKERS?.split(',').filter(Boolean)||[];const findings=[];let files=0;function visit(d){for(const x of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,x.name),rel=path.relative(dir,p);if(x.isDirectory()){visit(p);continue;}files++;if(/(?:personal-library|confirmed-profile|\.private\.|\.env$)/.test(rel))findings.push({path:rel,rule:'private-file'});if(/\.(?:js|cjs|mjs|json|md|txt|html|tsx|css)$/.test(rel))for(const [rule,re]of [...rules,...privateMarkers.map((v,i)=>['private-marker-'+i,new RegExp(v.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i')])])if(re.test(fs.readFileSync(p,'utf8')))findings.push({path:rel,rule});}}
+visit(dir);return {scope:'candidate files only; static pattern checks are not proof of absence of all sensitive data',files,findings};}
+module.exports={auditDirectory};if(require.main===module){const r=auditDirectory(process.argv[2]);console.log(JSON.stringify(r,null,2));process.exitCode=r.findings.length?1:0;}

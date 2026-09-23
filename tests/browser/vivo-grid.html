@@ -1,0 +1,43 @@
+<!doctype html><meta charset="utf-8"><title>真实结构回归：经历隔离与批次失败</title>
+<style>body{font:16px system-ui;margin:24px;max-width:950px}.record{border:1px solid #bbb;padding:15px;margin:12px}.form-item{margin:10px}label{display:block}input,textarea{padding:6px;width:70%}.ant-select-selection-item{display:block;background:#eee}#audit{white-space:pre-wrap;background:#eee;padding:16px}</style>
+<h1>经历隔离和失败继续测试（虚构资料）</h1><button id="start">开始测试</button><pre id="audit">待运行</pre><aside><div>工作经历</div><div>项目经历</div></aside><main id="forms"></main>
+<script>
+const bank=[];function fact(id,label,value,kind='text'){bank.push({id,label,value,kind,allowRewrite:false});}
+for(const [i,school] of ['研究生大学','本科学校'].entries()){fact(`education.${i}.school`,'学校中文全称',school);fact(`education.${i}.start`,'开始时间',i?'2018-09-01':'2024-09-01','date');fact(`education.${i}.end`,'结束时间',i?'2023-06-30':'2027-06-30','date');}
+fact('education.0.lab','实验室','仅研究生实验室');fact('education.0.rank','成绩排名','前10%');fact('education.1.rank','成绩排名','前5%');
+for(const [i,name] of ['甲公司','乙公司（乙）','丙公司','丁公司','戊公司'].entries()){fact(`work.${i}.company`,'对外展示名称',name);fact(`work.${i}.department`,'所属部门',`${name}设计部`);fact(`work.${i}.description`,'完整原始描述',`${name}独有的工作描述。`);fact(`work.${i}.achievement`,'工作业绩',`${name}已确认的交付。`);}
+fact('project.0.name','项目名称','已确认项目');fact('project.0.description','完整原始描述','该项目的完整背景和交付内容。');fact('project.0.role','项目角色','负责该项目的交互方案验证。');
+let calls=[];const listeners=[];const data={knowledgeLibrary:{authority:{active:true,bank}},experiences:{education:[{},{}],work:[{},{},{}],project:[{}]}};
+window.chrome={runtime:{onMessage:{addListener:f=>listeners.push(f),removeListener:()=>{}},sendMessage:async msg=>{
+if(msg.type==='OJT_AGENT_RESUME')return {resume:false};if(msg.type!=='MAP_FORM_FIELDS')return {ok:true};
+const fields=msg.payload.fields;calls.push(fields.map(f=>f.prefix+f.label).join('|'));
+if(fields.some(f=>f.prefix==='education.1.'))return {ok:false,error:'AI 返回格式无效'};
+return {ok:true,threshold:.92,mappings:fields.flatMap(f=>{let id=f.label==='项目职责'?'project.0.role':f.label==='工作业绩'?f.prefix+'achievement':null;return id?[{fieldId:f.id,sourceId:id,confidence:1}]:[]})};
+}},storage:{local:{get:async()=>data}}};
+const field=(label,body)=>`<div class="grid-cell"><div class="caption"><span>${label}</span></div>${body}</div>`;
+const date=()=>field('起止时间 *','<input placeholder="开始日期" type="date"><input placeholder="结束日期" type="date">');
+const edu=(name,key)=>`<div class="record" id="${key}">${date()}${field('学校 *',`<div class="ant-select"><input role="combobox"><span class="ant-select-selection-item">${name}</span></div>`)}${field('成绩排名 *','<input class="rank">')}${field('实验室','<input class="lab">')}</div>`;
+forms.innerHTML='<section><div class="plain-heading">教育经历</div>'+edu('本科学校','bachelor')+edu('研究生大学','graduate')+'</section><section><div class="plain-heading">实习经历</div>'+['乙公司','丙公司','甲公司','',''].map((n,i)=>`<div class="record" id="work${i}">${field('公司名称 *',`<div class="control-shell"><input placeholder="请输入" value="${n}"></div>`)}${field('工作性质','<input class="unclassified" placeholder="请选择">')}${field('所在部门','<div><input placeholder="请输入" class="department"></div>')}${field('职责描述','<textarea placeholder="请输入" class="description">'+(i===2?'用户手动写好的职责，保留原文。':'')+'</textarea>')}${field('工作业绩','<textarea class="achievement"></textarea>')}</div>`).join('')+'<article><h4>戊公司</h4><p>已保存的经历</p></article></section><section><div class="plain-heading">项目经历</div><div class="record" id="project">'+field('项目名称 *','<input value="已确认项目">')+field('项目职责','<textarea class="duties"></textarea>')+field('项目描述','<textarea placeholder="请输入" class="description"></textarea>')+'</div></section>';
+start.onclick=()=>listeners.forEach(f=>f({type:'START_APPLICATION_AGENT'},{},()=>{}));
+</script>
+<script src="../../integrations/openjobtracker/ui-icons.js"></script><script src="../../integrations/openjobtracker/job-validator.js"></script><script src="../../integrations/openjobtracker/semantic-mapper.js"></script><script src="../../integrations/openjobtracker/content.js"></script><script src="../../integrations/openjobtracker/application-agent.js"></script><script src="../../integrations/openjobtracker/agent-dom.js"></script>
+<script>
+const originalSection=OJTFormCore.formSection,originalDescriptor=OJTFormCore.getFieldDescriptor;
+OJTFormCore.formSection=el=>el.classList.contains('unclassified')?'':originalSection(el);
+OJTFormCore.getFieldDescriptor=el=>el.classList.contains('unclassified')?'请选择':originalDescriptor(el);
+const emit=ApplicationAgent.Runner.prototype.emit;
+ApplicationAgent.Runner.prototype.emit=function(message,extra){emit.call(this,message,extra);if(!['blocked','done'].includes(this.status)){audit.textContent=message;return;}
+const val=s=>document.querySelector(s).value;const checks={
+ '本科实验室保持空白':val('#bachelor .lab')==='',
+ '研究生实验室正确':val('#graduate .lab')==='仅研究生实验室',
+ '本科排名来自本科记录':val('#bachelor .rank')==='前5%',
+ '先日期后学校仍归属本科':val('#bachelor input[type=date]')==='2018-09-01',
+ '倒序实习公司分别对应描述':val('#work0 .description')==='乙公司（乙）独有的工作描述。'&&val('#work1 .description')==='丙公司独有的工作描述。'&&val('#work2 .description')==='用户手动写好的职责，保留原文。',
+ '教育AI失败后仍处理实习':val('#work2 .achievement')==='甲公司已确认的交付。',
+ '教育AI失败后仍处理项目':val('#project .duties')==='负责该项目的交互方案验证。'&&val('#project .description')==='该项目的完整背景和交付内容。',
+ '空白区块仅填写尚未出现的丁公司':val('#work3 input')==='丁公司'&&val('#work3 .description')==='丁公司独有的工作描述。',
+ '已保存卡片不再重复填写':val('#work4 input')==='',
+ '普通标题和网格字段正确读取部门':val('#work3 .department')==='丁公司设计部',
+ '失败批次只重试一次':calls.filter(s=>s.includes('education.1.')).length===2};
+audit.textContent=Object.entries(checks).map(([k,v])=>(v?'PASS':'FAIL')+' '+k).join('\n')+'\n'+message+'\n'+(extra?.missing||[]).join('\n');};
+</script>

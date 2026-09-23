@@ -1,0 +1,10 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const code=fs.readFileSync('integrations/openjobtracker/job-detail.js','utf8');
+const result=vm.runInNewContext(code,{document:{body:{innerText:'首页\n工作地点\n员工故事\n校园招聘\n交互设计师 已投递\n深圳市\n岗位职责\n负责ColorOS系统交互体验设计及项目落地。\n知识技能要求\n熟练使用Figma等设计软件。\n相关岗位推荐\n影像效果设计师'},querySelectorAll:()=>[]},location:{hostname:'careers.oppo.com',href:'https://careers.oppo.com/university/oppo/campus/post/1836?recruitType=Graduate'}});
+assert.equal(result.record.position,'交互设计师');assert.equal(result.record.company,'OPPO');assert.equal(result.record.channel,'官网');assert.equal(result.record.city,'深圳市');assert(result.record.summary.includes('知识技能要求'));assert(!result.record.summary.includes('影像效果设计师'));console.log('PASS OPPO detail title/status separation, JD boundary, channel and city');
+const lenovo=vm.runInNewContext(code,{document:{body:{innerText:'Hi!\n158****1234\n岗位详情\n交互设计\n应届生招聘\n设计类\n所属部门：IDG\n北京\n岗位职责\n1.深入分析用户的操作习惯与偏好，提供交互界面设计方案。\n立即投递'},querySelectorAll:()=>[]},location:{hostname:'talent.lenovo.com.cn',href:'https://talent.lenovo.com.cn/job/123'}});
+assert.equal(lenovo.record.company,'联想');assert.equal(lenovo.record.position,'交互设计');assert.equal(lenovo.record.city,'北京');assert.equal(lenovo.record.department,'IDG');assert.equal(lenovo.record.status,'状态未知');assert(!lenovo.evidence.pageVisibleText.includes('158'));
+const validator=require('../integrations/openjobtracker/job-validator.js');
+for(const noise of ['Hi!','Hello！','岗位详情','职位详情'])assert(!validator.isLikelyPosition(noise));
+assert(!validator.isLikelyCompany('岗位详情'));
+console.log('PASS Lenovo detail and greeting rejection');

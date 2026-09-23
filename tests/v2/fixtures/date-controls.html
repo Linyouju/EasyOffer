@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8"><title>日期控件兼容性</title>
+<style>body{font:16px sans-serif}input,select,textarea{display:block;margin:8px}.atsx-date-picker-period-month{display:flex;gap:15px}.atsx-date-picker-period-month-label{border:1px solid;padding:12px}.atsx-date-picker-period-hidden-input{position:absolute;width:0;height:0;opacity:0}.calendar{position:fixed;top:10px;right:10px;background:white;border:1px solid;padding:12px;z-index:10}.calendar button{margin:8px}[hidden]{display:none!important}</style>
+<article data-record id="record"><h2>日期适配</h2>
+<label>获奖日期<input id="full" placeholder="请输入日期"></label>
+<label>获奖时间<input id="year" placeholder="YYYY" maxlength="4"></label>
+<label>开始日期<input id="ym" placeholder="YYYY-MM" maxlength="7"></label>
+<label>结束日期<input id="slash" placeholder="YYYY/MM/DD"></label>
+<label>生日<input id="nativeDay" type="date"></label>
+<label>开始月份<input id="nativeMonth" type="month"></label>
+<label>来源仅有年份<input id="noMonth" type="month"></label>
+<label>来源仅有年月<input id="noDay" type="date"></label>
+<label>失焦校验<input id="reject" placeholder="YYYY-MM-DD"></label>
+<label>已填写<input id="existing" value="2024-01-08"></label>
+<label>年份<select id="sy" aria-label="年"><option value="">请选择</option><option value="y2026">2026年</option></select></label>
+<label>月份<select id="sm" aria-label="月"><option value="">请选择</option><option value="m8">08月</option></select></label>
+<label>日<select id="sd" aria-label="日"><option value="">请选择</option><option value="d26">26日</option></select></label>
+<label>月份英文<select id="enMonth" aria-label="月"><option value="">请选择</option><option value="aug">August</option></select></label>
+<div class="form-item"><div class="title">起止时间</div><div class="atsx-date-picker atsx-date-picker-period-month">
+<div id="begin" class="atsx-date-picker-period-month-label"><span data-cy="year">YYYY</span><span>-</span><span data-cy="month">MM</span></div>
+<div class="atsx-date-picker-period-line"></div>
+<div id="end" class="atsx-date-picker-period-month-label"><span data-cy="year">YYYY</span><span>-</span><span data-cy="month">MM</span></div>
+<input class="atsx-date-picker-period-hidden-input"></div></div>
+<label>完整原文<textarea id="original"></textarea></label>
+</article><div class="calendar" id="calendar" hidden></div><button id="save">保存</button><button id="submit">提交</button>
+<script>
+window.saved=0;window.submitted=0;save.onclick=()=>saved++;submit.onclick=()=>submitted++;
+reject.onblur=()=>{reject.value='';};
+ym.onblur=()=>{if(!/^\d{4}-\d{2}$/.test(ym.value))ym.value='';};
+slash.onblur=()=>{if(!/^\d{4}\/\d{2}\/\d{2}$/.test(slash.value))slash.value='';};
+year.onblur=()=>{if(!/^\d{4}$/.test(year.value))year.value='';};
+for(const endpoint of [begin,end])for(const part of ['year','month'])endpoint.querySelector(`[data-cy=${part}]`).onclick=()=>{
+ calendar.innerHTML='';calendar.hidden=false;const values=part==='year'?[2024,2025,2026,2027]:Array.from({length:12},(_,i)=>i+1);
+ for(const value of values){const b=document.createElement('button');b.textContent=part==='month'?String(value).padStart(2,'0'):String(value);b.onclick=()=>{endpoint.querySelector(`[data-cy=${part}]`).textContent=String(value).padStart(2,'0');calendar.hidden=true;};calendar.append(b);}
+};
+</script>

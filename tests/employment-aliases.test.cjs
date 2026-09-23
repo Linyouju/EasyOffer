@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict'),m=require('../integrations/openjobtracker/semantic-mapper.js');
+for(const label of ['工作单位','* 实习单位：','雇主名称','实习公司','单位全称'])assert.equal(m.recordAnchorType(label),'work');
+for(const label of ['项目全称','项目名称','项目经验名称'])assert.equal(m.recordAnchorType(label),'project');
+for(const label of ['单位地址','工作描述','行业类别','工作单位所在城市'])assert.equal(m.recordAnchorType(label),'');
+assert.equal(m.compatible({label:'入职时间'},{id:'work.0.end'}),false);
+assert.equal(m.compatible({label:'离职时间'},{id:'work.0.start'}),false);
+console.log('PASS record anchor aliases and start/end safety');
+assert.equal(m.recordName('腾讯科技有限公司','work'),m.recordName('腾讯','work'));
+assert.equal(m.recordName('科大讯飞学习机｜学习动机提升模块设计','project'),m.recordName('科大讯飞 AI精准学动力系统','project'));
+assert.notEqual(m.recordName('腾讯音乐','work'),m.recordName('腾讯','work'));
+const rows=[{recordType:'work',blockKey:'third',anchor:true,current:'腾讯科技有限公司'},{recordType:'work',blockKey:'third',label:'职位',current:''}];
+m.bindRecordGroups(rows,[{id:'work.0.company',value:'腾讯'}]);
+assert.equal(rows[1].prefix,'work.0.');
+assert.equal(rows[1].scopeUnknown,false);
+assert.equal(m.compatible({label:'项目职责'},{id:'project.0.role'}),true);
+assert.equal(m.compatible({label:'* 项目职责：'},{id:'project.0.description'}),false);
+assert.equal(m.compatible({label:'项目职责'},{id:'work.0.position'}),false);

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EasyOffer</title>
+  <style>
+    /* ==========================================================================
+       设计令牌
+       · 基础语义色沿用 shadcn/ui 命名（background / card / muted / border …），
+         与 options.html、页内助手面板保持同一份取值。
+       · 下面「3.x 精修令牌」是本轮按 Popup 视觉基准新增的角色化令牌：
+         卡片描边/投影、图标底板、次级文字、chevron。放在这里是为了让三张卡片
+         共用同一套值，而不是每张卡各写一遍。
+       ========================================================================== */
+    :root {
+      /* 圆角基准 11px，派生倍率沿用 shadcn/ui 的 scale（sm .6 / md .8 / lg 1 / xl 1.4 / 2xl 1.8）。
+         好处：以后要整体"更圆/更方"，只改 --radius 一处，全弹窗联动。 */
+      --radius: 11px;
+      --radius-sm: calc(var(--radius) * .6);   /* 6.6 */
+      --radius-md: calc(var(--radius) * .8);   /* 8.8 */
+      --radius-lg: var(--radius);              /* 11 */
+      --radius-xl: calc(var(--radius) * 1.4);  /* 15.4 */
+      --radius-2xl: calc(var(--radius) * 1.8); /* 19.8 */
+
+      --background: #fbfbfc;
+      --foreground: #1d1d1f;
+      --card: #ffffff;
+      --card-foreground: #1d1d1f;
+      --muted: #f5f5f7;
+      --muted-foreground: #6e6e73;
+      --subtle-foreground: #96969b;
+      --accent: #f0f0f3;
+      --accent-foreground: #1d1d1f;
+      --border: #e8e8ed;
+      --border-subtle: #f0f0f3;
+      --ring: #4a9e22;
+
+      --primary: #4a9e22;
+      --primary-foreground: #357a18;
+      --primary-soft: #eef9d4;
+      /* 主 CTA 渐变：黄绿 → 薄荷 → 青。只用于「开始智能网申」，不做大面积铺色 */
+      --primary-gradient: linear-gradient(105deg, #E5FF58 0%, #B8F477 38%, #78EDB6 68%, #57E7E5 100%);
+      --success: #3d9c2c;
+      --warning: #b25000;
+      --destructive: #d70015;
+
+      /* ---- 3.x 精修令牌：三张卡片共用，避免各写一套 ---- */
+      --ink: #111318;                              /* 标题 */
+      --ink-subtitle: #737986;                     /* 页头副标题 */
+      --ink-desc: #7a808c;                         /* 卡片描述 */
+      --chevron: #8e949e;                          /* 卡片 chevron */
+      --tile-bg: #f5f6f8;                          /* 图标底板 */
+      --card-border-idle: transparent;             /* 默认不描边：行更轻 */
+      --card-border-hover: rgba(17, 24, 39, .12);  /* 交互态（hover/聚焦/按下）才出现 */
+      --card-bg-hover: #fafafb;
+      /* 次级卡片默认不描边，靠投影把白卡从弹窗底色里托出来：
+         两层极轻叠加（shadcn shadow-sm 量级），但单层都还在"几乎看不见"的水准。 */
+      --card-shadow: 0 1px 2px rgba(17, 24, 39, .05), 0 1px 3px rgba(17, 24, 39, .04);
+      --card-border-idle: transparent;
+      --cta-shadow: 0 3px 12px rgba(120, 180, 60, .18);
+      --cta-shadow-hover: 0 5px 16px rgba(120, 180, 60, .24);
+
+      /* ---- 圆角：所有「面」用同一个半径（同一套），图标底板用低一档 ---- */
+      --radius-surface: var(--radius-xl);  /* 主卡片 / 列表项 / 图标按钮，全部同一半径 */
+      --radius-card: var(--radius-surface);
+      --radius-cta: var(--radius-surface);
+      --radius-tile-lg: var(--radius-lg);  /* 图标底板 */
+      --radius-tile-sm: var(--radius-lg);
+
+      /* ---- 间距：4px 基准的【两级】节奏，遵循接近性原则（Gestalt proximity）----
+         组内（三张卡片之间）8px → 它们被读成"一整个卡片组"；
+         组间（标题栏 ↔ 卡片组、卡片组 ↔ 页脚）16px → 把这个组与页头、页脚分开。
+         两级必须【不相等】——相等等于没有分组，页头会被读成和卡片同一组的一员。
+         当前档位：组内 8 / 组间 16（试过 12 / 20 偏松）。内距与组间同为 16。 */
+      --space-2: 8px;     /* 组内间距 */
+      --space-3: 12px;    /* 图标 → 文本 */
+      --space-4: 16px;    /* 内距 / 组间间距 */
+      --pad-x: var(--space-4);
+      --pad-top: var(--space-4);
+      --gap-in-group: var(--space-2);   /* 卡片之间 8 */
+      --gap-section: var(--space-4);    /* 区块之间 16 */
+      --gap-block: var(--gap-section);  /* 标题栏 → 卡片组 */
+      --gap-card: var(--gap-in-group);
+      --gap-list: var(--gap-in-group);
+      --gap-icon-text: var(--space-3);  /* 图标 → 文本 12 */
+
+      /* ---- 动效 ---- */
+      --ease-spring: cubic-bezier(.22, 1, .36, 1);
+      --ease-press: cubic-bezier(.32, .72, 0, 1);
+      --duration-fast: 120ms;
+      --duration-base: 160ms;
+      --duration-enter: 260ms;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 320px;
+      /* 弹窗窗口本身是直角（Chrome 不给扩展弹窗做圆角），所以内容贴边铺满，
+         圆角只留给卡片本身——不去硬造一个内缩圆角外壳。 */
+      background: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* 底部内距用「组间」值：卡片组 ↔ 页脚 也要拉开，不在组内 */
+    .wrap { padding: var(--pad-top) var(--pad-x) var(--gap-section); }
+
+    /* ---- 页头：内容 ~36px + 与卡片组的组间距 20 ---- */
+    header { display: flex; align-items: center; gap: 10px; padding: 0 0 var(--gap-block); }
+    /* 品牌标识：图标文件已按图形真实边界裁齐（图形铺满画布），容器不要再叠圆角裁切 */
+    .mark { width: 30px; height: 30px; flex: none; display: block; }
+    .mark img { width: 100%; height: 100%; display: block; }
+    .titles { flex: 1; min-width: 0; }
+    header h1 { font-size: 17.5px; font-weight: 680; letter-spacing: -.02em; color: var(--ink); margin: 0; line-height: 1.2; }
+    /* 副标题 11.5px / 行高 1.2，nowrap 保证一行不换行（可用 ~208px，实际 ~155px） */
+    header p { font-size: 11.5px; font-weight: 400; line-height: 1.2; color: var(--ink-subtitle); margin: 1px 0 0; white-space: nowrap; }
+    /* 个人资料入口：只保留一个图标按钮，不再单独占一张卡片 */
+    .avatar {
+      width: 28px; height: 28px; flex: none; padding: 0;
+      border: none; border-radius: 50%; cursor: pointer;
+      background: var(--tile-bg); color: var(--ink);
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
+    }
+    .avatar:hover { background: #eceef1; }
+    .avatar:active { transform: scale(.96); }
+
+    /* ---- 主操作卡片「开始智能网申」：整张可点击 ---- */
+    /* 与次级列表项【同一套尺寸】（min-height 60 / padding 12·14 / 底板 34 / 同一圆角），
+       层级只靠「渐变底 + 白底板 + 标题略大」表达，不靠尺寸差——同一列里不该出现两种行高。 */
+    .cta {
+      width: 100%; min-height: 60px; font-family: inherit; text-align: left; cursor: pointer;
+      display: flex; align-items: center; gap: var(--gap-icon-text);
+      padding: 12px 14px; margin: 0 0 var(--gap-card);
+      border: none; border-radius: var(--radius-cta);
+      background: var(--primary-gradient);
+      color: var(--ink);
+      box-shadow: var(--cta-shadow);
+      transition: box-shadow var(--duration-base) ease,
+                  filter var(--duration-base) ease,
+                  transform var(--duration-fast) var(--ease-press);
+    }
+    .cta .tile {
+      width: 34px; height: 34px; flex: none; border-radius: var(--radius-tile-lg);
+      background: #ffffff; color: var(--ink);
+      display: flex; align-items: center; justify-content: center;
+    }
+    /* 闪电是「动作图标」，不是品牌标识；用实心黑，与参考基准一致 */
+    .cta .body { flex: 1; min-width: 0; display: block; }
+    .cta .title { display: block; font-size: 14.5px; font-weight: 600; line-height: 1.3; letter-spacing: -.018em; color: var(--ink); }
+    /* 单行预算 ~192px @11.5px（320 − 面板内缩 6×2 − 描边 1×2 − 内距 16×2 − 卡内 14×2 − 底板 34 − 间距 12×2 − 箭头 16） */
+    .cta .desc { display: block; font-size: 11.5px; line-height: 1.3; color: rgba(17, 24, 39, .58); margin-top: 2px; }
+    .cta .go { flex: none; color: rgba(17, 24, 39, .72); display: flex; }
+    .cta:hover { filter: brightness(1.02); box-shadow: var(--cta-shadow-hover); }
+    .cta:active { transform: scale(.995); }
+    .cta:disabled { opacity: .5; cursor: not-allowed; filter: grayscale(.35); }
+
+    /* ---- 次级入口「同步 Excel」/「秋招工作台」：与主卡片同一套尺寸 ---- */
+    /* grid + 等分行高 —— 高度是设计常量，不由文案长度决定 */
+    .cards { display: grid; grid-auto-rows: 1fr; gap: var(--gap-list); }
+    .card {
+      width: 100%; min-height: 60px; font-family: inherit; text-align: left; cursor: pointer;
+      display: flex; align-items: center; gap: var(--gap-icon-text);
+      padding: 12px 14px;
+      /* 默认【不描边】：靠极轻投影与白底把卡片从弹窗底色里分出来，行更轻。
+         投影仍是两层极轻叠加（shadcn shadow-sm 的量级），因为少了描边这一层轮廓。
+         描边改为「交互时才出现」——hover / 键盘聚焦 / 按下。
+         这里用 transparent 而不是 none，保证 1px 仍在盒模型里，hover 时不会跳一下。 */
+      border: 1px solid var(--card-border-idle); border-radius: var(--radius-card);
+      background: var(--card); color: var(--card-foreground);
+      box-shadow: var(--card-shadow);
+      transition: background var(--duration-fast) ease,
+                  border-color var(--duration-fast) ease,
+                  transform var(--duration-fast) var(--ease-press);
+    }
+    .card .tile {
+      width: 34px; height: 34px; flex: none; border-radius: var(--radius-tile-sm);
+      background: var(--tile-bg); color: var(--ink);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card .body { flex: 1; min-width: 0; display: block; }
+    .card .title { display: block; font-size: 14px; font-weight: 600; line-height: 1.3; letter-spacing: -.012em; color: var(--ink); }
+    /* 单行预算 ~196px @11.5px（320 − 内距 16×2 − 卡内 14×2 − 底板 34 − 间距 12×2 − chevron 14） */
+    .card .desc { display: block; font-size: 11.5px; line-height: 1.3; color: var(--ink-desc); margin-top: 2px; }
+    .card .go { flex: none; color: var(--chevron); display: flex; }
+    /* 描边只在交互态出现：hover / 键盘聚焦 / 按下。默认态干净无框。
+       Hover 只轻微变化背景与描边，不做放大/浮起/弹跳 */
+    .card:hover,
+    .card:focus-visible,
+    .card:active { background: var(--card-bg-hover); border-color: var(--card-border-hover); }
+    .card:active { transform: scale(.995); }
+    .card:disabled { opacity: .5; cursor: not-allowed; }
+    .card:disabled:hover { background: var(--card); border-color: transparent; transform: none; }
+
+    /* ---- 页脚：一条分隔线 + 一行状态，不做卡片、不加底色 ---- */
+    .status {
+      height: 28px; padding: 0 var(--pad-x);
+      display: flex; align-items: center; gap: 6px;
+      border-top: 1px solid var(--border);
+      font-size: 11.5px; color: var(--muted-foreground);
+    }
+    .status .dot {
+      width: 6px; height: 6px; border-radius: 50%; flex: none;
+      background: #c7c7cc;
+      transition: background var(--duration-base) ease;
+    }
+    .status .dot.ok { background: var(--success); }
+    .status .dot.err { background: var(--destructive); }
+    .status .dot.busy { background: var(--warning); animation: pulse 1.2s ease-in-out infinite; }
+    .status .text { flex: 1; min-width: 0; max-height: 3.2em; overflow: auto; }
+    .status .ver { flex: none; color: var(--subtle-foreground); font-variant-numeric: tabular-nums; }
+
+    /* ---- 动效：入场按 40ms 递进，只动画 opacity/transform ---- */
+    @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .32; } }
+    header, .cta, .card, .status { animation: rise var(--duration-enter) var(--ease-spring) backwards; }
+    .cta { animation-delay: 40ms; }
+    .card { animation-delay: 80ms; }
+    .card:nth-child(2) { animation-delay: 120ms; }
+    .status { animation-delay: 160ms; }
+
+    /* ---- 无障碍：键盘焦点清晰可见，且尊重系统的减弱动效设置 ---- */
+    :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: var(--radius-lg); }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span class="mark" id="brandMark" aria-hidden="true"><img src="icons/icon128.png" alt=""></span>
+      <div class="titles">
+        <h1>EasyOffer</h1>
+        <p>网申自动填写 · 投递进度同步</p>
+      </div>
+      <!-- 个人资料入口：改到右上角图标按钮，不再单独占一张卡片 -->
+      <button class="avatar" type="button" id="optionsBtn" aria-label="配置个人资料" title="配置个人资料">
+        <span id="optionsIcon" aria-hidden="true"></span>
+      </button>
+    </header>
+
+    <!-- 主操作：整张卡片可点击 -->
+    <button class="cta" type="button" id="fillBtn">
+      <span class="tile" id="ctaIcon" aria-hidden="true"></span>
+      <span class="body">
+        <span class="title">开始智能网申</span>
+        <span class="desc">分析表单，自动填写</span>
+      </span>
+      <span class="go" id="ctaArrow" aria-hidden="true"></span>
+    </button>
+
+    <!-- 次级入口：两张卡共用同一套规范 -->
+    <div class="cards">
+      <button class="card" type="button" id="syncBtn">
+        <span class="tile" id="syncIcon" aria-hidden="true"></span>
+        <span class="body">
+          <span class="title">同步工作台</span>
+          <span class="desc">投递记录 · 岗位状态</span>
+        </span>
+        <span class="go" id="syncGo" aria-hidden="true"></span>
+      </button>
+
+      <button class="card" type="button" id="deskBtn">
+        <span class="tile" id="deskIcon" aria-hidden="true"></span>
+        <span class="body">
+          <span class="title">秋招工作台</span>
+          <span class="desc">投递进度 · 面试 · 分析</span>
+        </span>
+        <span class="go" id="deskGo" aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="status" id="log" role="status" aria-live="polite">
+    <span class="dot" id="logDot"></span>
+    <span class="text" id="logText">就绪</span>
+    <span class="ver" id="version"></span>
+  </div>
+
+  <script src="ui-icons.js"></script>
+  <script src="job-validator.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

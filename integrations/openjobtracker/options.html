@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EasyOffer · 设置中心</title>
+  <style>
+    /* ---- 设计令牌：与 popup.html / 页内助手面板共用同一套尺度 ---- */
+    :root {
+      /* 与 popup.html、页内助手面板同源：语义化 token + 单一 --radius 派生 */
+      --radius: 12px;
+      --radius-sm: calc(var(--radius) * .6);
+      --radius-md: calc(var(--radius) * .8);
+      --radius-lg: var(--radius);
+      --radius-xl: calc(var(--radius) * 1.4);
+      --radius-2xl: calc(var(--radius) * 1.8);
+
+      --background: #f7f7f8;
+      --foreground: #1d1d1f;
+      --card: #ffffff;
+      --card-foreground: #1d1d1f;
+      --muted: #f5f5f7;
+      --muted-foreground: #6e6e73;
+      --subtle-foreground: #96969b;
+      --accent: #f0f0f3;
+      --accent-foreground: #1d1d1f;
+      --border: #e8e8ed;
+      --border-subtle: #f0f0f3;
+      --input: #e8e8ed;
+      --ring: #4a9e22;
+      --primary: #4a9e22;
+      --primary-foreground: #357a18;
+      --primary-soft: #eef9d4;
+      --primary-gradient: linear-gradient(100deg, #e9f887 0%, #c3ea68 45%, #93da55 100%);
+      --success: #3d9c2c;
+      --warning: #b25000;
+      --destructive: #d70015;
+      --shadow-sm: 0 1px 2px rgba(16, 18, 20, .05);
+      --shadow-md: 0 1px 2px rgba(16, 18, 20, .04), 0 10px 30px rgba(16, 18, 20, .06);
+      --ease-spring: cubic-bezier(.22, 1, .36, 1);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      background: var(--background);
+      color: var(--foreground);
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 760px; margin: 0 auto; padding: 30px 20px 100px; }
+
+    /* ---- 页头 ---- */
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+    /* 与弹窗同一原则：图形已在图标文件里裁齐铺满，容器不叠圆角裁切。
+       44px 是「有效视觉尺寸」——从前 38px 的框里图形只占约 31px。 */
+    .mark {
+      width: 44px; height: 44px; flex: none;
+      display: block;
+    }
+    .mark img { width: 100%; height: 100%; display: block; }
+    header h1 { font-size: 20px; font-weight: 650; letter-spacing: -.02em; margin: 0; }
+    header p { color: var(--muted-foreground); margin: 2px 0 0; font-size: 12.5px; }
+
+    /* ---- 卡片 ---- */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 22px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .card h2 { font-size: 15px; font-weight: 650; letter-spacing: -.01em; margin: 0 0 4px; display: flex; align-items: center; gap: 9px; }
+    .h2i {
+      width: 26px; height: 26px; flex: none; border-radius: 8px;
+      background: var(--muted); color: var(--foreground);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .card .hint { color: var(--muted-foreground); font-size: 12px; margin: 0 0 18px; }
+    .card .hint b { color: var(--foreground); font-weight: 600; }
+    .card .hint.warn {
+      color: #80500a; background: #fff9ee; border: 1px solid #ffdfae;
+      border-radius: 11px; padding: 10px 12px;
+    }
+    .card > .hint:last-child { margin-bottom: 0; }
+
+    /* ---- 表单 ---- */
+    .field { margin-bottom: 15px; }
+    .field label { display: block; font-size: 12.5px; font-weight: 550; margin-bottom: 6px; color: var(--foreground); }
+    .field label.checkbox-label {
+      display: inline-flex; align-items: center; gap: 9px;
+      margin: 0; cursor: pointer; font-weight: 550;
+    }
+    .field label.checkbox-label input[type="checkbox"] {
+      width: 16px; height: 16px; padding: 0; margin: 0;
+      flex: 0 0 16px; accent-color: var(--primary); cursor: pointer;
+    }
+    .field input, .field textarea, .field select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--foreground);
+      background: var(--card);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field input::placeholder, .field textarea::placeholder { color: var(--subtle-foreground); }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      outline: none;
+      border-color: #a8dc6a;
+      box-shadow: 0 0 0 3px rgba(134, 217, 74, .22);
+    }
+    .field textarea { resize: vertical; min-height: 84px; line-height: 1.55; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+    /* ---- 底部操作条 ---- */
+    .actions {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(255, 255, 255, .86);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+    }
+    button.primary {
+      background: var(--primary-gradient); color: var(--foreground); border: none;
+      padding: 11px 34px; border-radius: var(--radius-lg);
+      font-size: 13.5px; font-weight: 600; font-family: inherit;
+      cursor: pointer; box-shadow: var(--shadow-sm);
+      transition: filter .18s, box-shadow .18s, transform .18s;
+    }
+    button.primary:hover { filter: brightness(1.02); box-shadow: 0 4px 14px rgba(120, 170, 40, .26); }
+    button.primary:active { transform: scale(.99); }
+    .toast { opacity: 0; font-size: 12.5px; color: var(--success); font-weight: 550; transition: opacity .3s; }
+    .toast.show { opacity: 1; }
+    .toast.error { color: var(--destructive); }
+
+    /* ---- 次级按钮 ---- */
+    .btn-2 {
+      display: inline-flex; align-items: center; gap: 7px;
+      border: 1px solid var(--border); background: var(--card); color: var(--foreground);
+      border-radius: var(--radius-md); padding: 9px 14px; cursor: pointer;
+      font-size: 12.5px; font-weight: 550; font-family: inherit;
+      transition: border-color .15s, background .15s;
+    }
+    .btn-2:hover { border-color: #d6d6dc; background: #fcfcfd; }
+    .btn-2 svg { width: 15px; height: 15px; }
+    .btn-add {
+      display: inline-flex; align-items: center; gap: 7px;
+      border: 1px dashed #cbe3a4; background: #fbfdf5; color: var(--primary-foreground);
+      border-radius: var(--radius-md); padding: 9px 14px; cursor: pointer;
+      font-size: 12.5px; font-weight: 550; font-family: inherit;
+      width: 100%; justify-content: center; margin-top: 4px;
+      transition: border-color .15s, background .15s;
+    }
+    .btn-add:hover { border-color: var(--primary); background: #f6fbec; }
+    .btn-add[style*="width:auto"] { width: auto !important; justify-content: flex-start; }
+    .btn-del {
+      border: 1px solid var(--border); background: var(--card); color: var(--muted-foreground);
+      border-radius: 8px; width: 32px; height: 32px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .btn-del:hover { background: #fff4f3; border-color: #ffc9c4; color: var(--destructive); }
+    .btn-del svg { width: 15px; height: 15px; }
+
+    /* ---- 自定义字段区 ---- */
+    .custom-row {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr 1.4fr auto;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 10px;
+    }
+    .custom-row .field { margin-bottom: 0; }
+    .custom-row .field label { font-size: 11.5px; }
+    .custom-head { display: none; }
+    .custom-head.show { display: grid; }
+
+    /* ---- 多段经历 ---- */
+    .exp-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      background: var(--muted);
+      position: relative;
+    }
+    .exp-item .exp-title { font-size: 12.5px; font-weight: 650; color: var(--muted-foreground); margin-bottom: 12px; }
+    .exp-item .btn-del { position: absolute; top: 12px; right: 12px; }
+
+    /* ---- 无障碍 ---- */
+    :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible { outline: none; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+  [hidden]{display:none!important} #profile-records details{padding:16px;border-bottom:1px solid #e5e7eb} #profile-manager textarea{width:100%;box-sizing:border-box} #profile-manager button{margin:6px} </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="mark" aria-hidden="true"><img src="icons/icon128.png" alt=""></span>
+      <div>
+        <h1>EasyOffer</h1>
+        <p>设置中心 · 资料保存在当前浏览器</p>
+      </div>
+    </header>
+    <p class="hint" style="margin:-10px 0 20px;">
+      智能填写会把字段说明、相关经历和补充背景发送到你配置的 AI 服务；简历导入分析会发送提取的简历文字。
+    </p>
+
+
+    <section class="card" id="profile-manager">
+      <h2>个人资料库</h2>
+      <p class="hint">只在这里维护个人资料。智能填写直接使用这里保存的内容；Excel 用于导入或备份，无需两边维护。</p>
+      <p id="profile-current">正在读取…</p><p id="profile-status" role="status" aria-live="polite"></p>
+      <div><label>导入资料 Excel <input id="profile-import" type="file" accept=".xlsx"></label><button id="profile-export" class="btn-2">导出资料 Excel</button><button id="profile-template" class="btn-2">下载空白模板</button><button id="profile-undo" class="btn-2">撤销上次资料更新</button></div>
+      <div id="profile-records"></div>
+      <label>新增资料类别 <select id="profile-type"></select></label><button id="profile-add" class="btn-2">新增记录</button>
+      <details><summary>导入最新简历／AI 修改资料</summary>
+        <p class="hint">分析时，相关资料文字会发送到你配置的模型服务。修改会先显示差异，不会整库覆盖。</p>
+        <input id="profile-resume-file" type="file" accept=".pdf,.docx,.txt,.md" aria-label="最新简历">
+        <textarea id="profile-resume" rows="5" maxlength="50000" placeholder="粘贴最新简历或补充资料" aria-label="简历文字"></textarea><button id="profile-analyze" class="btn-2">分析简历差异</button>
+        <textarea id="profile-instruction" rows="3" maxlength="10000" placeholder="例如：将某段项目描述替换为以下原文…" aria-label="资料修改要求"></textarea><button id="profile-ai" class="btn-2">理解修改要求</button>
+      </details>
+      <div id="profile-preview"></div><button id="profile-apply" class="btn-2" disabled>应用选中的变化</button>
+    </section>
+
+    <!-- Excel 文件配置 -->
+    <section class="card">
+      <h2><span class="h2i" data-icon="chart" data-icon-size="15" aria-hidden="true"></span>投递 Excel 备份（可选）</h2>
+      <p class="hint">
+        可选的本地 <b>.xlsx</b> 备份，不影响资料填写或工作台使用。导出时会读取该文件，
+        按「公司名称 + 应聘岗位」定位行：已存在则直接覆盖该行信息，不存在则追加新行，然后原地保存回该文件。<br />
+        如果需要 Excel 备份，可新建文件或选择已有文件。启用下方自动备份后，才会在同步时写入。<br />
+        也可「选择已有 Excel 文件」继续使用已有的投递记录表。<br />
+        文件句柄仅保存在浏览器本地（IndexedDB），数据不经过任何服务器。
+        需使用 Chrome / Edge 等支持 File System Access API 的浏览器；权限失效时点击「重新授权写入」即可。
+      </p>
+      <div class="field">
+        <label>Excel 文件</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button type="button" class="btn-2" id="excelCreateBtn"><span data-icon="upload" aria-hidden="true"></span>新建 Excel 文件（内置表头模板）</button>
+          <button type="button" class="btn-2" id="excelPickBtn"><span data-icon="folder" aria-hidden="true"></span>选择已有 Excel 文件</button>
+        </div>
+        <p class="hint" id="excelFileStatus" style="margin: 8px 0 0;">尚未选择文件</p>
+      </div>
+      <div class="field">
+        <button type="button" class="btn-2" id="excelReauthBtn" style="display:none;"><span data-icon="refresh" aria-hidden="true"></span>重新授权写入该文件</button>
+      </div>
+      <div class="field">
+        <label><input id="excel_auto" type="checkbox">同步后自动备份到所选 Excel</label><label for="excel_sheet_name">工作表名称</label>
+        <input type="text" id="excel_sheet_name" placeholder="投递记录（不存在时自动创建）" autocomplete="off" />
+      </div>
+    </section>
+
+    <!-- 大模型配置（兼容 OpenAI Chat Completions 协议的任意模型） -->
+    <section class="card">
+      <h2><span class="h2i" data-icon="sparkle" data-icon-size="15" aria-hidden="true"></span>智能识别与 AI 表单映射</h2>
+      <p class="hint">
+        可选。开启后，会用大模型从招聘页面的结构化文本中抽取投递记录（岗位、公司、城市、状态、时间），
+        AI 用于理解网页字段和投递状态；结果先保存到本地工作台，Excel 备份为可选项。<br />
+        支持任意兼容 <b>OpenAI /chat/completions</b> 协议的模型服务（OpenAI、DeepSeek、火山方舟、
+        通义千问、Kimi、智谱、硅基流动、本地 Ollama / vLLM 等）：选择服务商可自动带出接口地址，
+        也可选「自定义」手动填写。
+      </p>
+      <p class="hint warn">
+        开启即表示岗位数据会发送到你所填写的模型服务，若在意隐私可关闭此项。
+      </p>
+      <div class="field">
+        <label class="checkbox-label" for="llm_enabled">
+          <input type="checkbox" id="llm_enabled" />
+          <span>启用大模型记录识别与表单映射</span>
+        </label>
+      </div>
+      <div class="field">
+        <label class="checkbox-label"><input type="checkbox" id="semantic_enabled" checked />启用 AI 语义填表</label>
+        <p class="hint">智能填写发送页面字段说明、简历字段名称、相关经历原文和补充背景。绿色边框表示由 AI 判断填写，灰色边框表示按资料库直接填入——两种都请直接在原网页核对和修改。低置信度保持空白；服务不可用时暂停。最终提交由你操作。</p>
+      </div>
+      <div class="field">
+        <label for="mapping_threshold">AI 自动填写置信度门槛（0.80—1.00，默认 0.92）</label>
+        <input id="mapping_threshold" type="number" min="0.8" max="1" step="0.01" value="0.92" />
+      </div>
+      <div class="field">
+        <label for="llm_provider">服务商预设</label>
+        <select id="llm_provider">
+          <option value="openai">OpenAI</option>
+          <option value="deepseek">DeepSeek</option>
+          <option value="volcengine">火山引擎方舟</option>
+          <option value="dashscope">阿里通义千问（DashScope）</option>
+          <option value="moonshot">月之暗面 Kimi</option>
+          <option value="zhipu">智谱 GLM</option>
+          <option value="siliconflow">硅基流动 SiliconFlow</option>
+          <option value="openrouter">OpenRouter</option>
+          <option value="ollama">本地 Ollama</option>
+          <option value="custom">自定义（其他任意模型）</option>
+        </select>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="llm_base_url">接口地址 (Base URL)</label>
+          <input type="text" id="llm_base_url"
+            placeholder="https://api.openai.com/v1" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="llm_model">模型 ID (Model)</label>
+          <input type="text" id="llm_model" placeholder="gpt-4o-mini" autocomplete="off" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="llm_api_key">API Key</label>
+        <input type="password" id="llm_api_key" placeholder="sk-..." autocomplete="off" />
+      </div>
+      <div class="field">
+        <button type="button" class="btn-2" id="llmTestBtn"><span data-icon="plug" aria-hidden="true"></span>测试连接</button>
+        <p class="hint" id="llmTestResult" style="margin: 8px 0 0;"></p>
+      </div>
+    </section>
+
+    <!-- 个人网申信息 -->
+    <section class="card" hidden>
+      <h2><span class="h2i" data-icon="user" data-icon-size="15" aria-hidden="true"></span>个人网申信息</h2>
+      <p class="hint">用于「一键自动填表」。字段将根据页面表单智能匹配填充。教育相关信息请在下方「教育经历」中填写。</p>
+      <div class="grid-2">
+        <div class="field">
+          <label for="name">姓名</label>
+          <input type="text" id="name" placeholder="请输入姓名" />
+        </div>
+        <div class="field">
+          <label for="phone">手机</label>
+          <input type="tel" id="phone" placeholder="请输入手机号码" />
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="email">邮箱</label>
+          <input type="email" id="email" placeholder="请输入邮箱地址" />
+        </div>
+        <div class="field">
+          <label for="idCard">身份证号码</label>
+          <input type="text" id="idCard" placeholder="输入后自动带出性别与生日" autocomplete="off" maxlength="18" />
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="gender">性别</label>
+          <select id="gender">
+            <option value="">请选择</option>
+            <option value="男">男</option>
+            <option value="女">女</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="birthday">生日</label>
+          <input type="text" id="birthday" placeholder="1998-01-01" />
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="hometown">籍贯</label>
+          <input type="text" id="hometown" placeholder="如 江苏省南京市" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="intro">自我介绍</label>
+        <textarea id="intro" placeholder="简要介绍你的经历、技能与求职意向……"></textarea>
+      </div>
+    </section>
+
+    <!-- 教育经历（可多段） -->
+    <section class="card" hidden>
+      <h2><span class="h2i" data-icon="graduation" data-icon-size="15" aria-hidden="true"></span>教育经历</h2>
+      <p class="hint">可添加多段。填表时会按页面上的重复区块顺序，依次填入第 1、2、3 段。</p>
+      <div id="eduList"></div>
+      <button type="button" class="btn-add" data-exp="education"><span data-icon="plus" aria-hidden="true"></span>添加一段教育经历</button>
+    </section>
+
+    <!-- 工作经历（可多段） -->
+    <section class="card" hidden>
+      <h2><span class="h2i" data-icon="briefcase" data-icon-size="15" aria-hidden="true"></span>工作经历</h2>
+      <p class="hint">可添加多段。填表时会按页面上的重复区块顺序依次填入。</p>
+      <div id="workList"></div>
+      <button type="button" class="btn-add" data-exp="work"><span data-icon="plus" aria-hidden="true"></span>添加一段工作经历</button>
+    </section>
+
+    <!-- 项目经历（可多段） -->
+    <section class="card" hidden>
+      <h2><span class="h2i" data-icon="folder" data-icon-size="15" aria-hidden="true"></span>项目经历</h2>
+      <p class="hint">可添加多段。填表时会按页面上的重复段落顺序依次填入。</p>
+      <div id="projectList"></div>
+      <button type="button" class="btn-add" data-exp="project"><span data-icon="plus" aria-hidden="true"></span>添加一段项目经历</button>
+    </section>
+
+    <section class="card" hidden>
+      <h2><span class="h2i" data-icon="database" data-icon-size="15" aria-hidden="true"></span>个人网申资料库</h2>
+      <p id="workbook-current" role="status">正在读取资料库…</p>
+      <p class="hint">Excel 是填写依据。所有工作表都会保存；只有已确认且允许自动填写的内容参与填写。空白和需核对项留空，不从旧资料补入。更新 Excel 后请在这里重新导入。</p>
+      <input id="workbook-file" type="file" accept=".xlsx" aria-label="导入个人网申资料库 Excel">
+      <button id="workbook-import" type="button" class="btn-2" disabled><span data-icon="upload" aria-hidden="true"></span>导入并设为填写依据</button>
+      <p id="workbook-status" role="status"></p>
+      <details><summary>查看已导入的全部资料</summary><div id="workbook-records" style="max-height:480px;overflow:auto"></div></details>
+      <p class="hint">上传最新简历或粘贴经历资料，AI 整理后先核对，再更新个人信息。姓名、学历、日期等按事实填写；描述可按表单要求整理。请先保存本页其他修改再导入。</p>
+      <p class="hint">文件先在本地读取；点击分析后，提取的文字会发送到你配置的 AI 服务。补充背景会在智能填写时发送给该服务。API 密钥不会发送到招聘网站。</p>
+      <p id="knowledge-version"></p>
+      <div class="field"><label>最新简历 / 资料文件（PDF、DOCX、TXT、MD）</label><input id="knowledge-file" type="file" accept=".pdf,.docx,.txt,.md"></div>
+      <div class="field"><label for="knowledge-text">资料原文（也可以直接粘贴）</label><textarea id="knowledge-text" rows="10" maxlength="50000" placeholder="粘贴最新简历、项目细节、校园经历等真实资料"></textarea></div>
+      <button type="button" class="btn-2" id="knowledge-analyze"><span data-icon="sparkle" aria-hidden="true"></span>分析并预览更新</button>
+      <p id="knowledge-status" role="status"></p><div id="knowledge-preview" style="max-height:440px;overflow:auto"></div>
+      <button type="button" class="btn-2" id="knowledge-apply" disabled><span data-icon="check" aria-hidden="true"></span>应用选中的更新</button>
+      <button type="button" class="btn-2" id="knowledge-undo"><span data-icon="undo" aria-hidden="true"></span>恢复上一次资料版本</button>
+      <div class="field"><label for="knowledge-notes">更多背景与填写偏好</label><textarea id="knowledge-notes" rows="6" maxlength="10000" placeholder="例如：我是 2027 届交互设计硕士；求职方向、项目背景、希望强调的能力、表述偏好。这里的信息作为参考，不代替已确认的事实。"></textarea></div>
+      <button type="button" class="btn-2" id="knowledge-save-notes"><span data-icon="check" aria-hidden="true"></span>保存补充背景</button>
+    </section>
+
+    <section class="card" hidden>
+      <h2><span class="h2i" data-icon="users" data-icon-size="15" aria-hidden="true"></span>校园经历</h2>
+      <div id="campusList"></div>
+      <button type="button" class="btn-add" data-exp="campus"><span data-icon="plus" aria-hidden="true"></span>添加一段校园经历</button>
+    </section>
+
+    <!-- 自定义字段 -->
+    <section class="card" hidden>
+      <h2><span class="h2i" data-icon="plus" data-icon-size="15" aria-hidden="true"></span>自定义字段</h2>
+      <p class="hint">内置字段之外，你可以自行添加任意信息（如 GitHub、期望薪资等）。「匹配关键词」用逗号分隔，用于智能识别网申表单中的对应输入框。</p>
+      <div class="custom-head custom-row" id="customHead">
+        <div class="field"><label>字段名</label></div>
+        <div class="field"><label>匹配关键词（逗号分隔）</label></div>
+        <div class="field"><label>值</label></div>
+        <div></div>
+      </div>
+      <div id="customList"></div>
+      <button type="button" class="btn-add" id="addFieldBtn"><span data-icon="plus" aria-hidden="true"></span>添加一个字段</button>
+    </section>
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="saveBtn">保存设置</button>
+    <span class="toast" id="toast"></span>
+  </div>
+
+  <script src="ui-icons.js"></script>
+  <script src="xlsx.full.min.js"></script>
+  <script src="workbook-library.js"></script>
+  <script src="v2/profile-core.js"></script>
+  <script src="excel-store.js"></script>
+  <script src="v2/model-gateway.js"></script>
+  <script src="semantic-mapper.js"></script>
+  <script src="options.js"></script>
+  <script src="vendor/jszip.min.js"></script>
+  <script src="knowledge-base.js"></script>
+  <script src="profile-options.js"></script>
+</body>
+</html>

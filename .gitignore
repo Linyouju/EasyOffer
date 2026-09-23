@@ -1,0 +1,15 @@
+work/
+outputs/
+.DS_Store
+.sites-runtime/
+
+# Private local resume import payloads (never publish)
+integrations/openjobtracker/personal-library.xlsx
+integrations/openjobtracker/personal-library-source.json
+
+frontend/node_modules/
+
+node_modules/
+.env*
+*.private.json
+integrations/openjobtracker/confirmed-profile-additions.json

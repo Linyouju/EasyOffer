@@ -1,0 +1,95 @@
+<!doctype html><meta charset="utf-8"><title>获奖信息区块识别回归</title>
+<style>
+body{font:15px system-ui;margin:0}
+.section{display:grid;grid-template-columns:220px 1fr;gap:24px;padding:20px}
+.section-head{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:500}
+.dot{width:7px;height:7px;border-radius:50%;background:#4b7bd8;display:inline-block}
+.record{border-top:1px solid #e6e6e6;padding:16px 0}
+.record:first-child{border-top:0}
+.record-head{color:#9aa0a6;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.field{margin:10px 0}
+.field label{display:block;margin-bottom:6px}
+.req{color:#e5453b;font-style:normal}
+select,input{width:100%;padding:9px;border:1px solid #dcdfe6;border-radius:4px;color:#606266}
+#audit{white-space:pre-wrap;background:#f4f5f7;padding:14px;margin:20px;font:12px/1.6 ui-monospace}
+</style>
+<h1 style="font:16px system-ui;margin:20px">获奖信息区块识别（虚构资料）</h1>
+<button id="run" style="margin:0 20px">开始检查</button><pre id="audit">待运行</pre>
+
+<section class="section">
+  <div class="section-head"><span class="title">获奖信息</span><i class="dot"></i></div>
+  <div class="section-body">
+    <label><input type="checkbox" id="none"> 无获奖信息</label>
+    <div class="record" id="awardBlock1">
+      <div class="record-head">获奖信息-1</div>
+      <div class="grid">
+        <div class="field"><label><i class="req">*</i> 获奖类型</label><select id="type1"><option value="">请选择</option><option>学科竞赛</option><option>科技创新</option><option>荣誉表彰</option></select></div>
+        <div class="field"><label><i class="req">*</i> 奖项名称</label><select id="name1"><option value="">请选择</option></select></div>
+      </div>
+      <div class="field"><label>奖项说明</label><input id="desc1" placeholder="请输入"></div>
+    </div>
+    <div class="record" id="awardBlock2">
+      <div class="record-head">获奖信息-2</div>
+      <div class="grid">
+        <div class="field"><label><i class="req">*</i> 获奖类型</label><select id="type2"><option value="">请选择</option><option>学科竞赛</option><option>科技创新</option><option>荣誉表彰</option></select></div>
+        <div class="field"><label><i class="req">*</i> 奖项名称</label><select id="name2"><option value="">请选择</option></select></div>
+      </div>
+      <div class="field"><label>奖项说明</label><input id="desc2" placeholder="请输入"></div>
+    </div>
+  </div>
+</section>
+
+<script>
+const ownOptions=!location.search.includes('options=other');
+const aiOff=!location.search.includes('ai=on');
+const awardNames=['甲等奖项','乙等奖项'];
+for(const [sel,other] of [['#name1',['中国大学生自强之星','校级优秀学生干部']],['#name2',['中国大学生自强之星','校级优秀学生干部']]]){
+  for(const text of (ownOptions?awardNames:other)){const o=document.createElement('option');o.textContent=text;document.querySelector(sel).append(o);}
+}
+const bank=[];
+const fact=(id,label,value,kind='text')=>bank.push({id,label,value,kind,allowRewrite:false});
+awardNames.forEach((name,i)=>{
+  fact(`award.${i}.name`,'奖项或竞赛全称',name);
+  fact(`award.${i}.field_AWARD_0${i+1}_1`,'奖项类型',i?'科技创新':'学科竞赛');
+  fact(`award.${i}.level`,'奖项等级',i?'二等奖':'一等奖');
+  fact(`award.${i}.description`,'获奖说明',name+'的获奖说明。');
+  fact(`award.${i}.date`,'获奖日期',i?'2025-06-01':'2026-08-26','date');
+});
+const listeners=[];
+const synonyms={'奖项名称':'奖项或竞赛全称','获奖级别':'奖项等级'};
+const lookup=(prefix,label)=>bank.find(b=>b.id.startsWith(prefix)&&(b.label===label||b.label===synonyms[label]));
+window.chrome={runtime:{onMessage:{addListener:f=>listeners.push(f),removeListener:()=>{}},sendMessage:async msg=>{
+  if(msg.type==='OJT_AGENT_RESUME')return {resume:false};
+  if(msg.type==='OJT_VERSION')return {version:'2.0.26'};
+  if(msg.type!=='MAP_FORM_FIELDS')return {ok:true};
+  window.__aiCalls=(window.__aiCalls||0)+1;window.__aiFields=(window.__aiFields||[]).concat((msg.payload.fields||[]).map(f=>(f.prefix||'')+f.label));
+  const mappings=aiOff?[]:(msg.payload.fields||[]).flatMap(f=>{const s=lookup(f.prefix||'',f.label);return s?[{fieldId:f.id,sourceId:s.id,confidence:.99}]:[]});
+  return {ok:true,threshold:.92,mappings};
+}},storage:{local:{get:async()=>({knowledgeLibrary:{authority:{active:true,bank}},experiences:{}})}}};
+</script>
+<script src="../../integrations/openjobtracker/ui-icons.js"></script><script src="../../integrations/openjobtracker/job-validator.js"></script><script src="../../integrations/openjobtracker/semantic-mapper.js"></script><script src="../../integrations/openjobtracker/content.js"></script><script src="../../integrations/openjobtracker/application-agent.js"></script><script src="../../integrations/openjobtracker/agent-dom.js"></script>
+<script>
+ApplicationAgent.Runner.prototype.emit=function(message,extra){
+  if(!['blocked','done','stopped'].includes(this.status))return;
+  const v=s=>{const el=document.querySelector(s);return el.tagName==='SELECT'?el.selectedOptions[0].textContent.trim():el.value;};
+  const sent=window.__aiFields||[];
+  const missing=extra?.missing||[];
+  const checks=[
+    ['两个区块分别绑定 award.0 / award.1',v('#name1')==='甲等奖项'&&v('#name2')==='乙等奖项'&&v('#type1')!==v('#type2')],
+    ['奖项名称1 直接对上资料库',v('#name1')==='甲等奖项'],
+    ['奖项名称2 直接对上资料库',v('#name2')==='乙等奖项'],
+    ['获奖类型1 按资料库类型填对',v('#type1')==='学科竞赛'],
+    ['获奖类型2 按资料库类型填对',v('#type2')==='科技创新'],
+    ['奖项名称未再发给 AI',!sent.some(f=>/奖项名称/.test(f))],
+    ['获奖类型未再发给 AI',!sent.some(f=>/获奖类型/.test(f))],
+    ['奖项说明按资料库说明填对',v('#desc1')==='甲等奖项的获奖说明。'],
+    ['奖项说明未再发给 AI',!sent.some(f=>/奖项说明/.test(f))],
+    ['奖项字段全部填完不再列为未填',!missing.some(m=>/获奖信息 \/ (获奖类型|奖项名称|奖项说明)/.test(m))],
+    ['无获奖信息勾选框提示人工确认',missing.some(m=>/无获奖信息/.test(m))],
+    ['未点击保存或提交',!document.querySelector('button[type=submit]')]
+  ];
+  audit.textContent=checks.map(([name,ok])=>(ok?'PASS ':'FAIL ')+name).join('\n');
+};
+run.onclick=()=>listeners.forEach(f=>f({type:'START_APPLICATION_AGENT'},{},()=>{}));
+</script>

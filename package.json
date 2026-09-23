@@ -1,0 +1,21 @@
+{
+  "name": "easyoffer-agent",
+  "private": true,
+  "version": "5.0.3",
+  "scripts": {
+    "build:extension": "node scripts/build-extension.cjs",
+    "test:node": "node scripts/test-node.cjs",
+    "test:browser": "node scripts/test-browser.cjs",
+    "test:v2": "node scripts/test-v2.cjs",
+    "test:v2:chromium": "node scripts/test-v2-chromium.cjs",
+    "build:workbench": "npm --prefix frontend run build",
+    "build": "npm run build:workbench && npm run build:extension",
+    "release:prepare": "npm run build && node scripts/prepare-release.cjs",
+    "test:share": "node scripts/test-share-chromium.cjs",
+    "test:workbench": "node scripts/test-workbench-status.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "30.1.1",
+    "playwright": "1.62.1"
+  }
+}

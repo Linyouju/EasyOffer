@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><title>分段日期招聘表单</title>
+<div class="page-options"><div class="page-option-selected">我的简历</div><div class="page-option">投递记录</div></div><nav><li>个人信息</li><li>投递记录</li></nav>
+<div id="form">
+ <div class="apply-block"><div class="blockTitle"><span>个人信息</span></div><div class="apply-fields" id="personal"></div></div>
+ <div class="apply-block"><div class="blockTitle"><span>项目经验</span></div><div id="experiences"></div></div>
+ <div class="apply-block"><div class="blockTitle"><span>获奖经历</span></div><div class="apply-fields" id="award"></div></div>
+</div>
+<button id="save">保存</button><button id="submit">提交申请</button>
+<script>
+window.saves=0;window.submissions=0;save.onclick=()=>saves++;submit.onclick=()=>submissions++;
+function select(name,placeholder,values){return `<div class="sd-Dropdown"><label class="sd-Select-container"><span class="sd-Input-display-value"></span><input name="${name}" placeholder="${placeholder}"></label><div class="menu" hidden>${values.map(v=>`<div class="sd-Menu-content-item"><div class="option-label">${v}</div></div>`).join('')}</div></div>`;}
+function row(title,body){return `<div class="apply-field"><div class="title"><span>${title}</span></div><div class="ctrl">${body}</div></div>`;}
+const years=['2024','2025','2026'],months=Array.from({length:12},(_,i)=>String(i+1));
+personal.innerHTML=row('性别',select('gender','请选择',['男','女']));
+for(let i=1;i<=2;i++)experiences.insertAdjacentHTML('beforeend',`<div class="apply-fields multi" id="experience${i}">${row('起止时间',`<div class="month-range-select"><span>${select('startYear'+i,'年',years)}${select('startMonth'+i,'月',months)}</span><span>-</span><span>${select('endYear'+i,'年',years)}${select('endMonth'+i,'月',months)}</span><span><label><input type="checkbox" name="ongoing${i}">至今</label></span></div>`)}${row('项目名称',`<input name="name${i}" placeholder="项目名称">`)}${row('职责',`<input name="role${i}" placeholder="职责">`)}${row('项目描述',`<textarea name="description${i}" placeholder="内容"></textarea>`)}${row('项目中职责',`<textarea name="duties${i}" placeholder="项目中职责"></textarea>`)}</div>`);
+award.innerHTML=row('获奖时间',`<div class="month-select">${select('awardYear','年',years)}${select('awardMonth','月',months)}</div>`)+row('获奖名称','<input name="awardName" placeholder="获奖名称">');
+for(const holder of document.querySelectorAll('.sd-Dropdown')){const input=holder.querySelector('input'),display=holder.querySelector('.sd-Input-display-value'),menu=holder.querySelector('.menu');input.onclick=()=>{document.querySelectorAll('.menu').forEach(m=>m.hidden=true);menu.hidden=false;};input.onblur=()=>{menu.hidden=true;};input.oninput=()=>{for(const item of menu.children)item.hidden=!item.textContent.includes(input.value);};menu.onclick=e=>{const option=e.target.closest('.sd-Menu-content-item');if(option){display.textContent=option.textContent;
+if(input.name.includes('Year')){const month=document.querySelector(`[name="${input.name.replace('Year','Month')}"]`);if(month&&!month.parentElement.querySelector('span').textContent){month.parentElement.querySelector('span').textContent='1';month.placeholder='';delete month.dataset.ojtDateSegment;month.dispatchEvent(new Event('change',{bubbles:true}));}}
+input.value='';input.placeholder='';menu.hidden=true;input.dispatchEvent(new Event('change',{bubbles:true}));}};}
+</script>

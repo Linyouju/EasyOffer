@@ -1,0 +1,11 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),{JSDOM}=require('jsdom');
+(async()=>{
+const dom=new JSDOM('<main></main>',{url:'https://careers.example.test/status',runScripts:'outside-only'}),w=dom.window,tasks=[];let applied=0;let plan={observations:[],diagnostics:[{code:'UNSUPPORTED_COMPANY',message:'公司身份需核实'}],tools:[]};
+w.PageObserver={observe:()=>({fingerprint:'same',url:w.location.href,site:w.location.origin})};w.SemanticPlanner={continueTools:async p=>p};
+w.chrome={runtime:{onMessage:{addListener(){}},sendMessage:async m=>{if(m.type==='EASY_V2_CONFIG')return {ok:true,result:{autoSync:false}};if(m.type==='EASY_V2_SYNC_TASK')tasks.push(m.task);if(m.type==='EASY_V2_PLAN')return {ok:true,result:plan};if(m.type==='EASY_V2_APPLY_OBSERVATIONS'){applied++;return {ok:true,result:{results:[{applicationId:'one'}],authoritySaved:true}};}return {ok:true,result:{}};}},storage:{onChanged:{addListener(){}}}};
+w.eval(fs.readFileSync('integrations/openjobtracker/v2/page-runtime.js','utf8'));
+await assert.rejects(w.EasyOfferPage.sync(true),/发现投递信息.*公司身份需核实/);assert.equal(tasks.at(-1).status,'pending');assert.equal(applied,0);
+plan={...plan,observations:[{id:'good'}]};const partial=await w.EasyOfferPage.sync(true);assert.equal(partial.unresolved.length,1);assert.equal(tasks.at(-1).status,'pending');assert.equal(applied,1);
+plan={observations:[{id:'good'}],diagnostics:[],tools:[]};await w.EasyOfferPage.sync();assert.equal(applied,2,'partial result must not mark the page unchanged');assert.equal(tasks.at(-1).status,'complete');
+plan={observations:[],diagnostics:[],tools:[]};assert.equal((await w.EasyOfferPage.sync(true)).noRecords,true);assert.equal(tasks.at(-1).status,'no-records');plan={observations:[],diagnostics:[],tools:[],excluded:[{title:'实习岗位'}]};const skipped=await w.EasyOfferPage.sync(true);assert.equal(skipped.noRecords,false);assert.equal(skipped.excluded.length,1);assert.equal(tasks.at(-1).status,'complete');assert.equal(applied,2);dom.window.close();console.log('PASS application runtime: rejected evidence remains pending; partial valid records delivered without hiding unresolved records; same page retry allowed');
+})().catch(e=>{console.error(e);process.exitCode=1});

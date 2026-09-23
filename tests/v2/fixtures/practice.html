@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><title>示例招聘表单</title>
+<style>body{font:16px sans-serif;margin:40px}article{padding:16px;border:1px solid #aaa;margin:20px}label{display:block;margin:14px}input,textarea{display:block;width:400px}li{cursor:pointer}#options{border:1px solid #aaa}</style>
+<main><h1>实践经历</h1><p>请填写参与过的产品设计项目，可以填写课程项目，不要求企业任职。主要职责填写本人完成的任务，实践内容填写项目背景及交付。</p><div id="records"></div><button id="add">新增经历</button><button id="submit">提交申请</button><label><input type="checkbox" id="terms">我同意隐私协议</label></main>
+<script>
+let count=0;window.submissions=0;window.added=0;
+function add(){const i=++count;records.insertAdjacentHTML('beforeend',`<article data-record id="record${i}"><h2>实践 ${i}</h2><label>实践名称<input name="name${i}" required></label><label>本人角色<input name="role${i}" role="combobox" aria-haspopup="listbox" readonly required></label><ul id="options${i}" hidden><li role="option">UX设计</li><li role="option">交互设计</li></ul><label>开始日期<input name="start${i}" type="date" required></label><label>结束日期<input name="end${i}" type="date" required></label><label>主要职责<textarea name="duties${i}" required></textarea></label><label>实践内容<textarea name="description${i}" required></textarea></label></article>`);const input=document.querySelector(`[name=role${i}]`),menu=document.getElementById('options'+i);input.onclick=()=>menu.hidden=false;menu.onclick=e=>{if(e.target.getAttribute('role')==='option'){input.value=e.target.textContent;input.dispatchEvent(new Event('change',{bubbles:true}));menu.hidden=true;}};}
+add();document.getElementById('add').onclick=()=>{window.added++;add();};submit.onclick=()=>window.submissions++;
+</script>

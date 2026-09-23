@@ -1,0 +1,20 @@
+const assert=require('node:assert/strict'),C=require('../../integrations/openjobtracker/v2/application-core');
+let s=C.empty();C.migrate(s,[{id:'old',company:'示例公司',role:'产品设计师',location:'',status:'已投递',notes:'保留人工备注',url:'https://jobs.example.test/applications'}],'initial');
+const id=s.applications[0].id;let seq=0;function o(raw,extra={}){return {id:'obs'+(++seq),site:'https://jobs.example.test',regionId:'card1',pageKind:'application',observedAt:100+seq,sourceApplicationId:'A-1',sourceJobId:'J-1',posting:{company:'示例公司',title:'产品设计师',city:'北京',url:'https://jobs.example.test/applications'},status:{submitted:true,raw},evidence:[{regionId:'card1',text:'示例公司 产品设计师 '+raw,role:'current'}],...extra};}
+let r=C.observe(s,o('简历评估'));assert.equal(r.result.applicationId,id);assert.equal(s.applications.length,1);assert.equal(s.applications[0].state.stage,'screening');assert.equal(C.toView(s.applications[0]).status,'已投递');assert.equal(C.toView(s.applications[0]).notes,'保留人工备注');
+const events=s.events.length;C.observe(s,o('简历评估'));assert.equal(s.events.length,events);
+const replay=C.observe(s,{...s.observations[0],observedAt:1000});assert.equal(replay.result.applicationId,id);assert.equal(replay.result.revision,s.applications[0].revision);assert.equal(s.events.length,events);assert.equal(s.applications[0].lastObservedAt,1000);
+C.observe(s,o('筛选中',{posting:{company:'示例公司',title:'2027届产品设计师',city:'北京'},preferences:[{id:'p1',label:'第一意向',rawStatus:'待评估'}]}));assert.equal(s.applications.length,1);assert.equal(s.applications[0].preferences.length,1);
+C.observe(s,o('Offer',{evidence:[{regionId:'card1',text:'Offer',role:'future'}]}));assert.notEqual(s.applications[0].state.stage,'offer');
+C.observe(s,o('录用评估'));assert.equal(C.toView(s.applications[0]).status,'已投递');
+C.observe(s,o('面试中',{status:{submitted:true,raw:'面试中',occurredAt:'2026-09-23'}}));C.observe(s,o('简历筛选',{status:{submitted:true,raw:'简历筛选',occurredAt:'2026-09-20'}}));assert.equal(s.applications[0].state.stage,'interview');
+const a=s.applications[0];C.command(s,{operationId:'edit1',applicationId:id,baseRevision:a.revision,patch:{notes:'新备注',status:'笔试'}});const rev=a.revision;C.command(s,{operationId:'edit1',applicationId:id,baseRevision:0,patch:{notes:'不应覆盖'}});assert.equal(a.revision,rev);assert.equal(C.toView(a).notes,'新备注');
+const conflict=C.command(s,{operationId:'stale',applicationId:id,baseRevision:0,patch:{notes:'冲突'}});assert.equal(conflict.result.conflict,true);
+C.observe(s,o('简历筛选',{status:{submitted:true,raw:'简历筛选',occurredAt:'2026-09-20'}}));assert.equal(a.state.stage,'written');
+C.observe(s,o('面试中',{status:{submitted:true,raw:'面试中',occurredAt:'2026-09-24'}}));assert.equal(a.state.stage,'interview');
+const d=C.empty();C.observe(d,o('Offer',{pageKind:'detail',sourceApplicationId:'',status:{submitted:false,raw:''}}));assert.equal(C.toView(d.applications[0]).status,'计划投递');
+const x=C.empty();C.observe(x,o('已投递'));C.observe(x,o('已投递',{sourceApplicationId:'A-2',sourceJobId:'J-2',posting:{company:'示例公司',title:'产品设计师',city:'上海'}}));assert.equal(x.applications.length,2);
+const contexts=C.empty();C.observe(contexts,o('简历评估',{context:'投递详情，第一意向',posting:{company:'示例公司',title:'产品设计师',season:'2026'}}));const stable=contexts.applications[0].id;
+C.observe(contexts,o('筛选中',{context:'投递记录',posting:{company:'示例公司',title:'2027届产品设计师',city:'北京',season:'2027'}}));assert.equal(contexts.applications.length,1);assert.equal(contexts.applications[0].id,stable,'same source application ID survives generated context and season changes');
+C.observe(contexts,o('筛选中',{site:'https://different.example.test',context:'投递记录'}));assert.equal(contexts.applications.length,2,'source IDs are scoped to their site');
+console.log('PASS core: stable identity, migration, unknown status, future nodes, replay, event time, revisions, user edits, preferences, city distinction');

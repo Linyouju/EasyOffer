@@ -1,0 +1,147 @@
+<!doctype html><meta charset="utf-8"><title>记录绑定基线：部分填写锁死 / 同日消歧 / 占用与续填</title>
+<style>body{font:15px system-ui;margin:24px}#audit{white-space:pre-wrap;background:#f4f5f7;padding:16px;font:12px/1.7 ui-monospace}</style>
+<h1>记录绑定基线（直接调用 SemanticMapper 决策层）</h1>
+<p>本夹具不跑整页 Agent，只把「区块 → 资料库记录」这一层单独拎出来反复运行，因此结果稳定可复现。</p>
+<button id="run">开始检查</button><pre id="audit">待运行</pre>
+<div id="host"></div>
+
+<script src="../../integrations/openjobtracker/ui-icons.js"></script>
+<script src="../../integrations/openjobtracker/job-validator.js"></script>
+<script src="../../integrations/openjobtracker/semantic-mapper.js"></script>
+<!-- content.js 只是为了让测试运行器确认扩展脚本已加载（它导出 OJTFormCore）；本夹具不使用它的填写能力 -->
+<script src="../../integrations/openjobtracker/content.js"></script>
+<script>
+/* ---------- 资料库（对应真实库：AWARD-01 三等奖 / AWARD-02 二等奖，同一天） ---------- */
+function awardBank(){
+  const bank=[];
+  const add=(id,label,value,kind='text')=>bank.push({id,label,value,kind,allowRewrite:false});
+  add('award.0.name','奖项或竞赛全称','2026 未来设计师·全国高校数字艺术设计大赛');
+  add('award.0.date','获奖日期','2026-08-26','date');
+  add('award.0.level','奖项等级','三等奖');
+  add('award.0.description','获奖说明','国家级三等奖说明。');
+  add('award.1.name','奖项或竞赛全称','2026 未来设计师·全国高校数字艺术设计大赛江苏省赛');
+  add('award.1.date','获奖日期','2026-08-26','date');
+  add('award.1.level','奖项等级','二等奖');
+  add('award.1.description','获奖说明','省级二等奖说明。');
+  return bank;
+}
+
+/* ---------- 构造一个页面区块 ---------- */
+// current: 每个字段当前页面上的值（'' = 空）
+function block(key, current, opts={}){
+  const rows=[
+    {label:'竞赛名称', current:current.name??''},
+    {label:'竞赛时间', current:current.date??''},
+    {label:'所获奖项', current:current.level??''},
+    {label:'竞赛描述', current:current.desc??''},
+  ];
+  host.insertAdjacentHTML('beforeend',
+    `<div id="${key}">${rows.map((r,i)=>`<input id="${key}f${i}" value="${r.current}">`).join('')}</div>`);
+  rows.forEach((r,i)=>{
+    r.el=document.getElementById(key+'f'+i);
+    r.id=key+'f'+i; r.section='竞赛情况'; r.recordType='award';
+    r.blockKey=key; r.prefix=''; r.scopeUnknown=true; r.current=r.current;
+    // 「竞赛名称」是这一块的身份锚点（能代表这条记录）
+    r.anchor=(i===0);
+    if(opts.owned) r.el.dataset.ojtRecordPrefix=opts.owned;
+  });
+  return rows;
+}
+
+const M=()=>globalThis.SemanticMapper;
+const pairs=[];
+const check=(name,actual,expected)=>pairs.push([name,JSON.stringify(actual)===JSON.stringify(expected),actual,expected]);
+
+run.onclick=()=>{
+  host.innerHTML='';
+  const out=[];
+
+  /* ===== P0-2 竞赛区块部分填写后不能整块锁死 ===== */
+  {
+    const bank=awardBank();
+    const rows=block('bA',{date:'2026-08-26',level:'二等奖'});
+    M().bindRecordGroups(rows,bank);
+    const reasons=[...new Set(rows.map(r=>r.scopeReason).filter(Boolean))];
+    out.push('【P0-2】区块现状：竞赛名称空、时间 2026-08-26、奖项二等奖（库里 AWARD-01 三等奖 / AWARD-02 二等奖，同一天）');
+    check('P0-2a 区块能凭 日期+等级 识别为 AWARD-02（award.1）', rows[0].prefix, 'award.1.');
+    check('P0-2b 整块不应被判为身份未知', rows.some(r=>r.scopeUnknown), false);
+    check('P0-2c 空的「竞赛名称」仍可写', M().compatible(rows[0],{id:'award.1.name',label:'奖项或竞赛全称'}), true);
+    check('P0-2d 空的「竞赛描述」仍可写', M().compatible(rows[3],{id:'award.1.description',label:'获奖说明'}), true);
+    check('P0-2e 不出现「已有部分内容但名称为空」的整块禁止文案', reasons.some(r=>/已有部分内容但名称为空/.test(r)), false);
+    check('P0-2f 不出现「保留原内容」（该块其实没有原内容）', reasons.some(r=>/保留原内容/.test(r)), false);
+    out.push('  实际理由文案：'+(reasons.join(' / ')||'（无）'));
+  }
+
+  /* ===== P0-3 同日期不同奖项不能串记录 ===== */
+  {
+    const bank=awardBank();
+    const A=block('bB1',{date:'2026-08-26',level:'二等奖'});   // 二等奖 → AWARD-02
+    const B=block('bB2',{date:'2026-08-26',level:'三等奖'});   // 三等奖 → AWARD-01
+    M().bindRecordGroups([...A,...B],bank);
+    out.push('【P0-3】两个区块同一天，仅等级不同（二 / 三等奖）');
+    check('P0-3a 二等奖区块 → AWARD-02', A[0].prefix, 'award.1.');
+    check('P0-3b 三等奖区块 → AWARD-01', B[0].prefix, 'award.0.');
+    check('P0-3c 两块归属都非空且互不相同', Boolean(new Set([A[0].prefix,B[0].prefix]).size===2 && A[0].prefix && B[0].prefix), true);
+    check('P0-3d 两块都不被判为身份未知', [...A,...B].some(r=>r.scopeUnknown), false);
+  }
+
+  /* ===== P0-4 Agent 自己部分填写后，再次运行不能把自己锁死 ===== */
+  {
+    const bank=awardBank();
+    // 第一次：Agent 写入 日期 + 等级（写入时记录归属）
+    const rows=block('bC',{date:'2026-08-26',level:'二等奖'}, {owned:'award.1.'});
+    M().bindRecordGroups(rows,bank);
+    const first=rows[0].prefix;
+    out.push('【P0-4】第一次运行后归属：'+(first||'（无）')+'；模拟第二次运行（名称/描述仍空）');
+    check('P0-4a 第二次仍知道该块属于 AWARD-02', rows[0].prefix, 'award.1.');
+    check('P0-4b 第二次不应因自己写过的值而整块锁死', rows.some(r=>r.scopeUnknown), false);
+    check('P0-4c 第二次仍可继续填写名称', M().compatible(rows[0],{id:'award.1.name',label:'奖项或竞赛全称'}), true);
+    check('P0-4d 第二次仍可继续填写描述', M().compatible(rows[3],{id:'award.1.description',label:'获奖说明'}), true);
+
+    // 兜底：即使没有归属记忆（例如 DOM 重渲染导致 dataset 丢失），也不能整块锁死
+    const fresh=block('bC2',{date:'2026-08-26',level:'二等奖'});
+    M().bindRecordGroups(fresh,awardBank());
+    out.push('  （兜底）无归属记忆的第二次运行，归属：'+(fresh[0].prefix||'（无）'));
+    check('P0-4e 没有归属记忆时，仍能凭 日期+等级 重新识别为 AWARD-02', fresh[0].prefix, 'award.1.');
+  }
+
+  /* ===== P1-1 同一条资料记录不能重复填写 ===== */
+  {
+    const bank=awardBank().filter(b=>b.id.startsWith('award.0.'));
+    const A=block('bD1',{});
+    const B=block('bD2',{});
+    M().bindRecordGroups([...A,...B],bank);
+    out.push('【P1-1】两个全空区块，库里只有 AWARD-01');
+    check('P1-1a 最多一个区块绑定 AWARD-01', [A[0].prefix,B[0].prefix].filter(p=>p==='award.0.').length, 1);
+    check('P1-1b 第二个区块不得再次绑定 AWARD-01', [A[0].prefix,B[0].prefix].filter(p=>p==='award.0.').length<=1, true);
+  }
+
+  /* ===== P1-2 已有绑定的记录允许原区块继续使用（used 不能把自己挡住） ===== */
+  {
+    const bank=awardBank().filter(b=>b.id.startsWith('award.1.'));
+    // Block A 已绑定 award.1 且只填了一半；此时 award.1 已被标记占用
+    const A=block('bE1',{date:'2026-08-26',level:'二等奖'},{owned:'award.1.'});
+    const all=[...A];
+    M().bindRecordGroups(all,bank,['award.1.']);
+    out.push('【P1-2】AWARD-02 已被占用，Block A 尚有未完成字段');
+    check('P1-2a Block A 仍能继续使用 AWARD-02 补齐自身', A[0].prefix, 'award.1.');
+    check('P1-2b Block A 的未完成字段仍可写', M().compatible(A[0],{id:'award.1.name',label:'奖项或竞赛全称'}), true);
+  }
+
+  /* ===== P1-5 重新扫描后，Agent 写入值不能被当成新的独立证据 ===== */
+  {
+    const bank=awardBank();
+    // 名称已由 Agent 写入（与 AWARD-02 一致），日期/等级也由 Agent 写入
+    const rows=block('bF',{name:'2026 未来设计师·全国高校数字艺术设计大赛江苏省赛',date:'2026-08-26',level:'二等奖'},{owned:'award.1.'});
+    M().bindRecordGroups(rows,bank);
+    out.push('【P1-5】全部值都由 Agent 写入，重新扫描');
+    check('P1-5a 恢复 AWARD-02 绑定', rows[0].prefix, 'award.1.');
+    check('P1-5b 整块不因“都是自己写的”而锁死', rows.some(r=>r.scopeUnknown), false);
+  }
+
+  audit.textContent=out.join('\n')+'\n\n'
+    +pairs.map(([n,ok,actual,expected])=>
+        (ok?'PASS ':'FAIL ')+n+(ok?'':`  ← 实际 ${JSON.stringify(actual)} / 期望 ${JSON.stringify(expected)}`)
+      ).join('\n');
+};
+</script>

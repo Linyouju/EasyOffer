@@ -1,0 +1,81 @@
+<!doctype html><meta charset="utf-8"><title>「在校职务」区块能否进入识别流程（P0-1）</title>
+<style>
+body{font:16px system-ui;margin:24px;max-width:900px}
+.section{border-top:1px solid #e6e6e6;padding:16px 0}
+.record{border:1px solid #dcdfe6;border-radius:6px;padding:14px;margin:12px 0}
+.field{margin:8px 0}label{display:block;margin-bottom:4px;color:#606266}
+input,textarea{width:80%;padding:7px;border:1px solid #dcdfe6;border-radius:4px}
+#audit{white-space:pre-wrap;background:#f4f5f7;padding:16px;font:12px/1.7 ui-monospace}
+</style>
+<h1>「在校职务」区块识别（虚构资料）</h1>
+<p>页面只有「组织名称 / 职务名称 / 任职时间 / 职责描述」，<b>没有标准名称锚点</b>（如「校园经历名称」）。</p>
+<button id="start">开始智能网申</button><pre id="audit">待运行</pre>
+<main id="forms"></main>
+
+<script>
+const bank=[];const fact=(id,label,value,kind='text')=>bank.push({id,label,value,kind,allowRewrite:false});
+const campus=[
+  {name:'学院团总支办公室',role:'办公室主任',start:'2023-09-01',end:'2024-06-30',desc:'协助院领导及同学完成日常事务沟通与协调，负责资料整理与归档。'},
+  {name:'校园文学社',       role:'社长',        start:'2022-09-01',end:'2023-06-30',desc:'负责文学社日常运营与团队协调，统筹成员分工与内容产出。'},
+];
+campus.forEach((c,i)=>{
+  fact(`campus.${i}.name`,'经历名称',c.name);
+  fact(`campus.${i}.role`,'担任角色或职务',c.role);
+  fact(`campus.${i}.start`,'开始日期',c.start,'date');
+  fact(`campus.${i}.end`,'结束日期',c.end,'date');
+  fact(`campus.${i}.description`,'职责描述',c.desc,'longtext');
+});
+
+const listeners=[];const data={knowledgeLibrary:{authority:{active:true,bank}},experiences:{campus:[{},{}]},userProfile:{},customFields:[]};
+window.chrome={runtime:{getManifest:()=>({version:'3.5.0'}),onMessage:{addListener:f=>listeners.push(f),removeListener:()=>{}},sendMessage:async msg=>{
+  if(msg.type==='OJT_AGENT_RESUME')return {resume:false};
+  if(msg.type==='OJT_VERSION')return {version:'3.5.0'};
+  if(msg.type!=='MAP_FORM_FIELDS')return {ok:true};
+  // AI 关闭：不返回任何 mapping，用来检验「规则层」本身能否处理这类区块
+  window.__aiCalls=(window.__aiCalls||0)+1;
+  return {ok:true,threshold:.92,mappings:[]};
+}},storage:{local:{get:async()=>data}}};
+
+const field=(label,body)=>`<div class="field"><label>${label}</label>${body}</div>`;
+// 注意：这里刻意不使用「校园经历名称」这类已被白名单收录的字段名
+forms.innerHTML=`<div class="section"><h3>在校职务</h3>`
+ + campus.map((c,i)=>`<div class="record" id="camp${i}">`
+   + field('组织名称',`<input class="org">`)
+   + field('职务名称',`<input class="role">`)
+   + field('任职时间',`<input class="start" type="date"><input class="end" type="date">`)
+   + field('职责描述',`<textarea class="desc"></textarea>`)
+   + `</div>`).join('')
+ + `</div>`;
+start.onclick=()=>listeners.forEach(f=>f({type:'START_APPLICATION_AGENT'},{},()=>{}));
+</script>
+<script src="../../integrations/openjobtracker/ui-icons.js"></script><script src="../../integrations/openjobtracker/job-validator.js"></script><script src="../../integrations/openjobtracker/semantic-mapper.js"></script><script src="../../integrations/openjobtracker/content.js"></script><script src="../../integrations/openjobtracker/application-agent.js"></script><script src="../../integrations/openjobtracker/agent-dom.js"></script>
+<script>
+const emit=ApplicationAgent.Runner.prototype.emit;
+ApplicationAgent.Runner.prototype.emit=function(message,extra){
+  emit.call(this,message,extra);
+  if(!['blocked','done','stopped'].includes(this.status)){audit.textContent=message;return;}
+  const v=s=>document.querySelector(s).value;
+  const org0=v('#camp0 .org'), role0=v('#camp0 .role'), desc0=v('#camp0 .desc');
+  const org1=v('#camp1 .org'), role1=v('#camp1 .role'), desc1=v('#camp1 .desc');
+  const filled=[org0,role0,desc0,org1,role1,desc1].filter(Boolean);
+  const checks=[
+    ['P0-1a 在校职务区块被识别为一条经历（至少一个字段被填）', filled.length>0],
+    ['P0-1b 组织名称被填入资料库记录', !!org0&&!!org1],
+    ['P0-1c 职务名称被填入资料库记录', !!role0&&!!role1],
+    ['P0-1d 职责描述被填入资料库记录', !!desc0&&!!desc1],
+    ['P0-1e 两块取到不同记录（不重复经历）', new Set([org0,org1]).size===2],
+    // 注意：必须排除「一个都没填」时的空集真值，否则这条会变成毫无意义的 PASS
+    ['P0-1f 填入的值确实来自资料库（未填则无法验证，记为失败）',
+      filled.length>0 && [org0,org1,role0,role1].every(x=>!x||['学院团总支办公室','校园文学社','办公室主任','社长'].includes(x))],
+    // 「职务名称」也出现在企业任职中，单独一个标签不是校园身份锚点。
+    // P0-1a-f 仍要求完整在校职务区块成功填写两条真实且不同的校园记录。
+    // 不为满足一个内部实现假设而加入会把企业职务错归校园的永久别名。
+    ['P0-1g 无区块上下文时「职务名称」保持未定，不固定归为校园身份锚点', globalThis.SemanticMapper.recordAnchorType('职务名称')===''],
+    ['P0-1h 决策层：「组织名称」应被判为校园类锚点（当前实现返回空）', globalThis.SemanticMapper.recordAnchorType('组织名称')==='campus'],
+  ];
+  audit.textContent=checks.map(([k,ok])=>(ok?'PASS ':'FAIL ')+k).join('\n')
+    +'\n\n【实际填写结果】\n  区块1 组织='+(org0||'（空）')+' 职务='+(role0||'（空）')+' 描述='+(desc0||'（空')+')'
+    +'\n  区块2 组织='+(org1||'（空）')+' 职务='+(role1||'（空）')+' 描述='+(desc1||'（空')+')'
+    +'\n【面板待补充】'+((extra?.missing||[]).slice(0,6).join(' / ')||'（无）');
+};
+</script>

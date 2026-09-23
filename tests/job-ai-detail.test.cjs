@@ -1,0 +1,6 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('integrations/openjobtracker/background.js','utf8');
+const parser=source.slice(source.indexOf('async function parseRecordsWithLLM'),source.indexOf('\n/**',source.indexOf('async function parseRecordsWithLLM')));
+let request;
+const ctx={JobValidator:require('../integrations/openjobtracker/job-validator.js'),AbortSignal,fetch:async(url,options)=>{request=JSON.parse(options.body);return{ok:true,json:async()=>({choices:[{message:{content:JSON.stringify([{company:'联想',position:'交互设计',city:'北京',department:'IDG',summary:'未经原文支持的描述',status:'已投递'},{company:'岗位详情',position:'Hi!'}])}}]})}}};vm.createContext(ctx);vm.runInContext(parser,ctx);
+(async()=>{const records=await ctx.parseRecordsWithLLM({pageKind:'detail',pageCompany:'联想',pageVisibleText:'联想\n交互设计\n北京\nIDG\n负责交互设计',host:'talent.lenovo.com.cn'},{base_url:'https://example.com',api_key:'test',model:'test'});assert.equal(records.length,1);assert.equal(records[0].position,'交互设计');assert.equal(records[0].status,'状态未知');assert.equal(records[0].summary,'');assert(request.messages[0].content.includes('单个岗位详情页'));console.log('PASS AI detail evidence, greeting rejection and no invented applied status');})().catch(e=>{console.error(e);process.exitCode=1});

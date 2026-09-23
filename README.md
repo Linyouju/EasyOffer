@@ -1,2 +1,48 @@
-# EasyOffer
-AI-assisted job application autofill and a local application tracker. Chrome and Edge extension.
+# EasyOffer · 5.0.3 测试版
+
+在浏览器中用自己的资料填写网申，并在本地桌面工作台管理投递。公司名称优先、单列列表；工作台随插件安装，无须部署网站或使用作者的账户。测试版不承诺所有招聘网站的自定义控件都已兼容。
+
+## 安装与第一次使用
+
+1. 从 [Releases](https://github.com/Linyouju/EasyOffer/releases) 下载 `easyoffer-extension.zip` 并解压，在 Chrome / Edge 扩展管理页打开「开发者模式」，选择「加载已解压的扩展程序」，选中含 `manifest.json` 的目录。当前未上架商店；更新时替换同一目录并重新加载，保留扩展 ID，先导出备份。
+2. 打开 EasyOffer 的「资料与设置」。从空白添加记录，或导入个人资料 Excel，核对差异后应用。也可粘贴简历或在本地读取 PDF/DOCX/TXT，点击 AI 分析后确认差异。扫描 PDF 需先转文字。
+3. 配置自己的模型服务地址、模型名和 API key，执行设置页的语义测试。支持 OpenAI 兼容协议及 Anthropic 协议；需使用者自己的服务账户，服务可能收费。
+4. 在招聘网页点击「开始智能网申」。按需授予当前网站访问权限。核对回读结果，缺少事实或控件拒绝时根据原因补充。插件不会替你保存或提交网申。
+5. 在岗位详情或投递记录页点击「同步工作台」，再打开本地工作台查看。以页面中的状态证据关联记录；本地修改时间不代表检查了官网。
+6. 可导出资料库 Excel 和工作台 JSON；投递 Excel 备份可选，需选择可写文件。不开启 Excel 也能填写和管理投递。
+
+个人资料的日常编辑入口只有资料管理页。Agent 直接读取同一份 Profile；Excel 是导入/导出格式，修改外部文件不会自动覆盖资料。原文直接对应时保留原文；拆分、整合或限字时才基于已确认事实适配。添加经历不会让无关字段失效，修改来源字段后相关计划必须重新核对。
+
+网页中的既有内容会保留。要补空描述，应确认同一经历的名称/日期等能够与资料对应。遇到歧义请核对，不要反复强填。页面刷新可能丢失网站尚未保存的编辑，操作前自行保留。
+
+## 数据与权限
+
+所有使用者拥有独立的本地资料和投递记录。不会预装作者资料、投递清单、密钥或 Excel 文件句柄。默认本地工作台；旧线上工作台桥接保留兼容，仅在该网站有权限时运行。没有飞书、Python 后台或云账户要求。
+
+详见 [隐私说明](PRIVACY.md) 和 [第三方声明](THIRD_PARTY_NOTICES.md)。卸载扩展或清除浏览器数据可能删除本地资料，请先备份；浏览器本地存储并非加密保险箱。
+
+## 源码构建
+
+需要 Node.js 22+ 与 npm。下载干净源码包后执行：
+
+```sh
+npm ci
+npm --prefix frontend ci
+npm run build
+```
+
+运行包位于 `outputs/easyoffer-extension-v2/`。`workbench/` 保存工作台页面业务源码，`frontend/` 构建 React 组件，`dist/` 为生成目录，插件运行源码在 `integrations/openjobtracker/`。构建按明确清单收集文件并验证运行依赖及已知敏感模式，不递归复制整个开发目录。
+
+```sh
+npm run test:node
+npm run test:v2
+npm run test:browser
+```
+
+隔离浏览器验收：先安装 Playwright Chromium，设置私有 `MODEL_CONFIG_FILE`（与设置页 llmConfig 字段一致），运行 `npm run test:share`。真实模型验收会发送合成测试资料并使用服务额度。不要用真实网申页面或个人浏览器目录跑自动化回归。
+
+公开仓库应从经过审计的源码快照开始，不要直接推送私人开发仓库的历史。`npm run release:prepare` 生成干净源码与扩展 ZIP；它不会自动建立 GitHub 仓库、推送代码或部署网站。
+
+## 测试边界
+
+隔离夹具、真实模型请求和真实雇主网站验收分开记录。日期支持不同精度、拆分年月日、原生日期、年月区间及部分自定义组件；无法回读成功时应报告未完成。Anthropic 目前主要为协议回归覆盖。模型和招聘网站都可能变化，请在最终提交前逐项核对。

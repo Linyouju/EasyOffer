@@ -1,0 +1,4 @@
+const projects=[{recordId:'DEMO-PROJ-A',name:'公共服务预约体验研究',role:'UX设计',start:'2025-01-12',end:'2025-03-20',description:'背景：梳理预约服务中的信息理解问题。本人负责访谈整理与交互原型设计。交付了预约流程原型。'},{recordId:'DEMO-PROJ-B',name:'校园设施报修设计',role:'交互设计',start:'2025-04-02',end:'2025-06-16',description:'背景：改善校园设施报修流程。本人负责流程分析与状态页面设计。交付了状态页面原型。'}];
+const bank=projects.flatMap((p,i)=>Object.entries(p).filter(([k])=>k!=='recordId').map(([k,v])=>({id:`project.${i}.${k}`,recordId:p.recordId,label:k,value:v,kind:['start','end'].includes(k)?'date':k==='description'?'longtext':'text',allowRewrite:k==='description',source:{record:p.recordId}})));
+const library={active:true,sourceName:'验收合成资料.xlsx',bank,stats:{sheets:1,rows:bank.length,populated:bank.length,confirmed:bank.length,unconfirmed:0},sheets:[{name:'项目经历',rows:bank.map(f=>({record:f.recordId,label:f.label,value:f.value,status:'已确认',mode:'原文'}))}]};
+module.exports={projects,bank,library};

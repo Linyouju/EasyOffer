@@ -1,0 +1,9 @@
+{
+  "name": "SheetJS Community Edition",
+  "version": "0.18.5",
+  "license": "Apache-2.0",
+  "upstream": "https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js",
+  "licenseSource": "https://docs.sheetjs.com/docs/miscellany/license/",
+  "origin": "Verified existing loaded extension asset; version checked from its exported XLSX.version.",
+  "sha256": "c9506197caf809a075b6dee1da0d36fb19da7158ffe8a88e7b0c96c5d8623c99"
+}

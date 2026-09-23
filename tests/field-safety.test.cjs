@@ -1,0 +1,25 @@
+const assert=require('node:assert/strict');
+const m=require('../integrations/openjobtracker/semantic-mapper.js');
+const v=require('../integrations/openjobtracker/job-validator.js');
+for(const text of ['查看记录','扫码关注微信公众号了解更多美团招聘信息','查看详情','立即投递'])assert.equal(v.isLikelyPosition(text),false,text);
+assert.equal(v.isLikelyPosition('体验设计师'),true);
+const school={id:'education.0.school',label:'学校',value:'江南大学'};
+assert.equal(m.compatible({label:'居住地'},school),false);
+assert.equal(m.compatible({label:'学历'},school),false);
+assert.equal(m.compatible({label:'学校'},school),true);
+assert.equal(m.compatible({label:'学历'},{id:'profile.degree',label:'学历',value:'江南大学'}),false);
+assert.equal(m.compatible({label:'学历'},{id:'education.0.degree',label:'学历',value:'硕士研究生'}),true);
+assert.equal(m.compatible({label:'学历 学校'},school),false);
+const raw='办公室主任｜院系级｜2018.09 - 2019.06\n协助整理资料和活动协调。';
+const bank=m.buildBank({customFields:[{label:'学生干部经历',value:raw}]});
+assert.equal(bank.find(b=>b.id==='campus.0.role').value,'办公室主任');
+assert.equal(bank.find(b=>b.id==='campus.0.start').value,'2018.09');
+assert.equal(bank.find(b=>b.id==='campus.0.description').value,'协助整理资料和活动协调。');
+assert.equal(m.compatible({label:'角色',section:'校园经历'},bank.find(b=>b.id==='custom.0')),false);
+assert.equal(m.compatible({label:'角色',section:'校园经历'},bank.find(b=>b.id==='campus.0.role')),true);
+assert.equal(m.compatible({label:'开始时间',section:'校园经历'},bank.find(b=>b.id==='campus.0.role')),false);
+console.log('PASS field type barriers, composite campus split, navigation/promotional job rejection');
+
+assert.equal(m.compatible({label:'学校所在城市'},school),false);
+assert.equal(m.compatible({label:'现居城市'},{id:'profile.province',label:'现居省份',value:'江苏省'}),false);
+assert.equal(m.compatible({label:'结束时间'},{id:'project.0.start',label:'开始时间',value:'2026-05'}),false);
