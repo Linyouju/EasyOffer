@@ -2,10 +2,11 @@
   <img src="https://raw.githubusercontent.com/Linyouju/EasyOffer/main/integrations/openjobtracker/icons/icon128.png" width="80" alt="EasyOffer 图标" />
   <h1>EasyOffer</h1>
   <p><strong>让 AI 读懂网申，用你的资料填写，帮你跟进投递。</strong></p>
-  <p>AI 驱动的网申助手与求职工作台 · Chrome / Edge 扩展</p>
+  <p>为秋招反复填表而生 · AI 网申助手与求职工作台 · Chrome / Edge</p>
   <p>
     <a href="https://github.com/Linyouju/EasyOffer/releases/download/v1.0.0/easyoffer-extension.zip"><strong>⬇ 下载插件</strong></a> ·
     <a href="#安装">安装教程</a> ·
+    <a href="#让-ai-帮你安装">AI 帮你安装</a> ·
     <a href="docs/USAGE.md">使用指南</a> ·
     <a href="https://github.com/Linyouju/EasyOffer/releases/tag/v1.0.0">V1.0 正式版</a> ·
     <a href="https://github.com/Linyouju/EasyOffer/issues">反馈问题</a>
@@ -14,7 +15,13 @@
 
 ## 这是什么？
 
-每换一家公司的招聘网站，就要重新填一次教育、实习和项目经历；投递多了，还要记住哪家在笔试、哪家等面试。
+秋招季，同一份履历，要在不同公司的官网一遍遍重填。投递多了，还得记住哪家在笔试、哪家等面试。EasyOffer 就是为这些高频网申场景做的。
+
+### 为什么做这个项目？
+
+我在秋招时真的填烦了：教育经历、实习、项目，换个网站又来一遍。试过一些网申插件，结果经常是日期选不上、经历配错、描述漏填，最后还得自己逐项检查、补填。
+
+于是做了 EasyOffer：让 AI 读懂页面、找到自己的资料，再把投递进度一起记下来。希望也能帮正在秋招的你，少花些时间和表单较劲，多留些精力给作品集、面试和真正想去的岗位。
 
 **EasyOffer 让 AI 分析招聘页面，按需读取你的个人资料，完成填写适配，并将岗位和投递进度同步到配套工作台。**
 
@@ -58,6 +65,14 @@
 
 点击浏览器工具栏的扩展图标，将 **EasyOffer** 固定，之后就能随时打开。
 
+### 让 AI 帮你安装
+
+正在用 **WorkBuddy、Codex 或 Claude Code**？把项目链接和下面这段话交给它，协助下载、安装和配置：
+
+> 请帮我安装 EasyOffer：https://github.com/Linyouju/EasyOffer 。先阅读 README 和使用指南，优先下载最新正式版安装包，解压到固定目录，并引导我在 Chrome 或 Edge 中加载扩展。如果需要从源码构建，请按开发文档操作。最后带我完成个人资料和模型配置。
+
+Agent 可以协助准备文件和检查环境；浏览器加载或授权步骤，根据工具能力由它协助或引导你完成。
+
 ## 开始使用
 
 1. **准备资料**：点击插件右上角的人像图标，录入经历，或导入 Excel / 简历文件。
@@ -78,6 +93,12 @@
 - **进度来源与备份**：查看官网读取时间、区分手动更新，导出资料和投递记录。
 
 [下载 V1.0 正式版 →](https://github.com/Linyouju/EasyOffer/releases/tag/v1.0.0)
+
+## 怎么继续更新？
+
+- **跟随作者更新**：到 [Releases](https://github.com/Linyouju/EasyOffer/releases) 下载新版，按[更新指南](docs/USAGE.md#更新与备份)替换并重新加载。也可以在 GitHub 的 **Watch → Custom → Releases** 订阅发布通知。
+- **让 Agent 协助更新**：把仓库链接交给你的 Agent，让它检查新版、备份数据并协助更新。
+- **按自己的需求改进**：项目已开源，可以 Fork 一份，交给 Agent 协助适配新表单、修复问题或增加功能。欢迎通过 [Issues](https://github.com/Linyouju/EasyOffer/issues) 反馈，也欢迎提交 Pull Request。
 
 ## 后续扩展
 
