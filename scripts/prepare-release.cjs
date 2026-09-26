@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const root=path.resolve(__dirname,'..'),release=path.join(root,'outputs/easyoffer-release'),source=path.join(release,'source'),extension=path.join(release,'extension');
 fs.rmSync(release,{recursive:true,force:true});fs.mkdirSync(source,{recursive:true});
 function cp(file){fs.mkdirSync(path.dirname(path.join(source,file)),{recursive:true});fs.copyFileSync(path.join(root,file),path.join(source,file));}
-const dirs=['frontend','workbench','vendor','licenses','examples','tests'];
+const dirs=['frontend','workbench','vendor','licenses','examples','tests','docs'];
 for(const dir of dirs){const walk=d=>{for(const e of fs.readdirSync(path.join(root,d),{withFileTypes:true})){if(e.name==='node_modules'||e.name.startsWith('.'))continue;const f=path.join(d,e.name);e.isDirectory()?walk(f):cp(f);}};walk(dir);}
 for(const file of ['package.json','package-lock.json','README.md','PRIVACY.md','LICENSE','THIRD_PARTY_NOTICES.md','.gitignore'])cp(file);
 for(const file of JSON.parse(fs.readFileSync(path.join(__dirname,'extension-files.json'))))cp('integrations/openjobtracker/'+file);

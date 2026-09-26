@@ -1,103 +1,67 @@
-# EasyOffer
+<div align="center">
+  <img src="integrations/openjobtracker/icons/icon128.png" width="80" alt="EasyOffer 图标" />
+  <h1>EasyOffer</h1>
+  <p><strong>少填重复简历，清楚掌握每一次投递。</strong></p>
+  <p>AI 网申填写助手 + 求职投递工作台 · Chrome / Edge 扩展</p>
+  <p>
+    <a href="https://github.com/Linyouju/EasyOffer/releases/download/v5.0.3/easyoffer-extension.zip"><strong>⬇ 下载插件</strong></a> ·
+    <a href="#安装">安装教程</a> ·
+    <a href="docs/USAGE.md">使用指南</a> ·
+    <a href="https://github.com/Linyouju/EasyOffer/releases/tag/v5.0.3">版本更新</a> ·
+    <a href="https://github.com/Linyouju/EasyOffer/issues">反馈问题</a>
+  </p>
+</div>
 
-**把个人资料整理一次，用来填写不同公司的网申，并集中管理投递进度。**
+## 这是什么？
 
-EasyOffer 是一款 Chrome / Edge 浏览器扩展，自带本地投递工作台。
+每换一家公司的招聘网站，就要重新填一次教育、实习和项目经历；投递多了，还要记住哪家在笔试、哪家等面试。
 
-[下载 5.0.3 测试版](https://github.com/Linyouju/EasyOffer/releases/tag/v5.0.3) · [反馈问题](https://github.com/Linyouju/EasyOffer/issues)
+**EasyOffer 帮你复用一份个人资料，辅助填写网申，并把岗位和投递进度集中到一个工作台。**
 
-## 可以做什么
+| 填简历 | 记投递 | 看进度 |
+| --- | --- | --- |
+| 理解网页字段，优先填写资料库原文 | 从岗位页、投递记录页读取信息 | 按公司查看状态，一键打开官网 |
+| 需要限字或拆分时，AI 适配已有内容 | 同步岗位与官网当前状态 | 更新笔试、面试、Offer 等进度 |
 
-- **管理个人资料**：录入教育、实习、项目和获奖经历，也可以导入 Excel 或通过 AI 整理简历。
-- **辅助填写网申**：理解网页字段，优先使用已确认的原文；需要拆分、合并或限字时，再由 AI 适配。
-- **记录投递进度**：读取招聘页面中的岗位和状态，汇总到工作台。
-- **跟进每次投递**：打开官网、查看详情、更新状态，导出记录备份。
+## 界面预览
 
-## 5 分钟开始使用
+**浏览器里开始填写，工作台里跟进投递。**
 
-### 1. 下载并安装
+<img src="docs/images/popup.png" width="340" alt="EasyOffer 插件：开始智能网申、同步工作台、打开秋招工作台三个入口，右上角为个人资料设置" />
 
-1. 打开 [下载页](https://github.com/Linyouju/EasyOffer/releases/tag/v5.0.3)，在 **Assets** 中下载 **easyoffer-extension.zip**。
-2. 解压文件，得到 `extension` 文件夹。
-3. 在浏览器地址栏输入：Chrome 用 `chrome://extensions`，Edge 用 `edge://extensions`。
-4. 打开右上角的 **开发者模式**，点击 **加载已解压的扩展程序**，选择刚才的 `extension` 文件夹。
-5. 点击浏览器工具栏的扩展图标，将 **EasyOffer** 固定到工具栏。
+![EasyOffer 工作台：按公司展示岗位、官网入口、笔试与面试状态及最近检查时间](docs/images/workbench.png)
 
-普通用户下载扩展 ZIP 即可；`easyoffer-source.zip` 是开发者使用的源码包。
+*以上为实际界面，工作台使用虚构的示例记录。*
 
-### 2. 录入自己的资料
+## 安装
 
-打开 EasyOffer → **资料与设置**，选择一种方式：
+**准备：Chrome 或 Edge 浏览器；使用 AI 功能需要自己的模型 API Key。**
 
-- 直接添加个人信息和各段经历；
-- 导入个人资料 Excel，核对差异后保存；
-- 粘贴简历文字或选择 PDF / Word / TXT 文件，点击 AI 分析，确认后保存。
+1. **[下载插件 ZIP](https://github.com/Linyouju/EasyOffer/releases/download/v5.0.3/easyoffer-extension.zip)**，解压得到 `extension` 文件夹。
+2. 在浏览器地址栏输入 `chrome://extensions`（Edge 输入 `edge://extensions`），打开 **开发者模式**。
+3. 点击 **加载已解压的扩展程序**，选择 `extension` 文件夹。安装完成！
 
-以后直接在资料管理页更新即可。Excel 用于导入和导出；扫描版 PDF 可先转成文字再导入。
+点击浏览器工具栏的扩展图标，将 **EasyOffer** 固定，之后就能随时打开。
 
-### 3. 配置 AI
+## 开始使用
 
-在设置页填写自己的 **模型服务地址、模型名称和 API Key**，然后运行连接测试。
+1. **准备资料**：点击插件右上角的人像图标，录入经历，或导入 Excel / 简历文件。
+2. **连接 AI**：在设置页填写模型服务地址、模型名称和 API Key，测试连接。
+3. **填写网申**：打开公司的简历编辑页，点击 **开始智能网申**；填完核对后保存、提交。
+4. **跟进投递**：打开岗位或投递记录页，点击 **同步工作台**，再到 **秋招工作台** 查看进度。
 
-这些信息由你使用的模型服务商提供。支持 OpenAI 兼容协议和 Anthropic 协议，调用费用由相应服务商计费。
+[查看详细使用指南 →](docs/USAGE.md)
 
-### 4. 开始填写和跟进
+## 当前版本 · 5.0.3 测试版
 
-| 你想做的事 | 操作 |
-| --- | --- |
-| 填写网申 | 打开公司的简历编辑页 → 点击 EasyOffer → **开始智能网申** |
-| 记录岗位或更新进度 | 打开岗位详情页或投递记录页 → **同步工作台** |
-| 查看所有投递 | 点击 **秋招工作台** |
-| 修改投递状态 | 在列表中使用状态按钮或旁边的下拉菜单；误操作后可短暂撤销 |
-| 再次查看招聘网站 | 点击列表中的 **↗ 官网** |
+官网入口直接可点；投递状态可灵活切换；操作后支持 **8 秒撤销**；显示状态来源与最近官网检查时间。
 
-填写完成后，核对信息并由你在招聘网站保存、提交。插件会保留页面已有内容，需要补充的项目会显示提示。
+[查看更新说明与下载文件 →](https://github.com/Linyouju/EasyOffer/releases/tag/v5.0.3)
 
-开启自动检查后，访问相关招聘页面时可同步状态；工作台会区分「官网读取」和「手动更新」，并显示最近检查时间。
+## 了解更多
 
-## 5.0.3 更新了什么
+[更新与备份](docs/USAGE.md#更新与备份) · [数据与权限](PRIVACY.md) · [源码构建](docs/DEVELOPMENT.md) · [问题反馈](https://github.com/Linyouju/EasyOffer/issues)
 
-- 官网入口直接显示在投递列表中，点击后新标签打开。
-- 状态操作支持直接进入面试、标记未通过或放弃，结束的投递隐藏推进按钮。
-- 状态修改后提供 **8 秒撤销**。
-- 展示状态来源与官网检查时间，编辑备注不会改变官网检查时间。
-- 修复公开源码的依赖安装问题，支持在干净环境构建。
-
-## 更新与备份
-
-更新前导出资料和投递记录备份。下载新版扩展 ZIP，将文件替换到原安装目录，再到浏览器扩展管理页点击 EasyOffer 的 **重新加载**。
-
-资料和投递记录保存在自己的浏览器中。AI 功能会将所需内容发送到你配置的模型服务。卸载扩展或清理浏览器数据前，请先导出备份。[查看数据与权限说明](PRIVACY.md)
-
-## 遇到问题
-
-到 [Issues](https://github.com/Linyouju/EasyOffer/issues) 描述：使用的浏览器、EasyOffer 版本、出现问题的页面类型，以及预期和实际结果。截图请遮住联系方式等个人信息，保留字段名称和错误提示即可。
-
-<details>
-<summary>开发者：从源码构建</summary>
-
-需要 Node.js 22+ 与 npm。
-
-```sh
-git clone https://github.com/Linyouju/EasyOffer.git
-cd EasyOffer
-npm ci
-npm --prefix frontend ci
-npm run build
-```
-
-在浏览器扩展管理页加载 `outputs/easyoffer-extension-v2/`。
-
-```sh
-npm run test:node
-npm run test:v2
-npm run test:browser
-```
-
-`integrations/openjobtracker/` 是扩展源码，`workbench/` 是工作台业务源码，`frontend/` 是 React 组件。`npm run release:prepare` 生成源码包、扩展包和校验值。
-
-隔离浏览器测试需安装 Playwright Chromium；真实模型测试另需设置 `MODEL_CONFIG_FILE`，会使用模型额度。运行 `npm run test:share` 验证首次使用流程。
-
-</details>
+资料保存在本地浏览器；AI 使用你配置的模型服务，费用按服务商规则计收。开启自动检查后，访问招聘页面时同步状态。
 
 [MIT 许可证](LICENSE) · [第三方声明](THIRD_PARTY_NOTICES.md)
