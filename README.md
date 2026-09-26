@@ -7,7 +7,8 @@
     <a href="https://github.com/Linyouju/EasyOffer/releases/download/v1.0.0/easyoffer-extension.zip"><strong>⬇ 下载插件</strong></a> ·
     <a href="#安装">安装教程</a> ·
     <a href="#让-ai-帮你安装">AI 帮你安装</a> ·
-    <a href="docs/USAGE.md">使用指南</a> ·
+    <a href="docs/USAGE.md">图文教程</a> ·
+    <a href="docs/HOW_IT_WORKS.md">AI 工作原理</a> ·
     <a href="https://github.com/Linyouju/EasyOffer/releases/tag/v1.0.0">V1.0 正式版</a> ·
     <a href="https://github.com/Linyouju/EasyOffer/issues">反馈问题</a>
   </p>
@@ -73,14 +74,20 @@
 
 Agent 可以协助准备文件和检查环境；浏览器加载或授权步骤，根据工具能力由它协助或引导你完成。
 
-## 开始使用
+## 怎么用？
 
-1. **准备资料**：点击插件右上角的人像图标，录入经历，或导入 Excel / 简历文件。
-2. **连接 AI**：在设置页填写模型服务地址、模型名称和 API Key，测试连接。
-3. **填写网申**：打开公司的简历编辑页，点击 **开始智能网申**；填完核对后保存、提交。
-4. **跟进投递**：打开岗位或投递记录页，点击 **同步工作台**，再到 **秋招工作台** 查看进度。
+**首次准备：安装插件 → 连接 AI → 录入个人资料。**
 
-[查看详细使用指南 →](docs/USAGE.md)
+**每次网申：打开简历编辑页 → 智能填写 → 核对并提交 → 同步工作台。**
+
+| 步骤 | 你做什么 | EasyOffer 帮你做什么 |
+| --- | --- | --- |
+| 1. 准备 | 点击右上角人像图标，配置模型、导入或填写资料 | 保存已确认的经历，供后续复用 |
+| 2. 填写 | 在网申编辑页点击 **开始智能网申** | AI 理解字段、匹配资料，执行并检查填写 |
+| 3. 核对 | 补充待填项，核对后在官网保存、提交 | 显示待处理内容，支持继续填写 |
+| 4. 跟进 | 在岗位或投递记录页点击 **同步工作台** | 识别岗位与状态，关联记录并展示进度 |
+
+**[跟着图文教程操作 →](docs/USAGE.md)** · **[看懂架构、AI 流程与处理方式的区别 →](docs/HOW_IT_WORKS.md)**
 
 ## EasyOffer V1.0 正式版
 
