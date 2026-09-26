@@ -1,13 +1,13 @@
 <div align="center">
-  <img src="integrations/openjobtracker/icons/icon128.png" width="80" alt="EasyOffer 图标" />
+  <img src="https://raw.githubusercontent.com/Linyouju/EasyOffer/main/integrations/openjobtracker/icons/icon128.png" width="80" alt="EasyOffer 图标" />
   <h1>EasyOffer</h1>
-  <p><strong>少填重复简历，清楚掌握每一次投递。</strong></p>
-  <p>AI 网申填写助手 + 求职投递工作台 · Chrome / Edge 扩展</p>
+  <p><strong>让 AI 读懂网申，用你的资料填写，帮你跟进投递。</strong></p>
+  <p>AI 驱动的网申助手与求职工作台 · Chrome / Edge 扩展</p>
   <p>
-    <a href="https://github.com/Linyouju/EasyOffer/releases/download/v5.0.3/easyoffer-extension.zip"><strong>⬇ 下载插件</strong></a> ·
+    <a href="https://github.com/Linyouju/EasyOffer/releases/download/v1.0.0/easyoffer-extension.zip"><strong>⬇ 下载插件</strong></a> ·
     <a href="#安装">安装教程</a> ·
     <a href="docs/USAGE.md">使用指南</a> ·
-    <a href="https://github.com/Linyouju/EasyOffer/releases/tag/v5.0.3">版本更新</a> ·
+    <a href="https://github.com/Linyouju/EasyOffer/releases/tag/v1.0.0">V1.0 正式版</a> ·
     <a href="https://github.com/Linyouju/EasyOffer/issues">反馈问题</a>
   </p>
 </div>
@@ -16,12 +16,20 @@
 
 每换一家公司的招聘网站，就要重新填一次教育、实习和项目经历；投递多了，还要记住哪家在笔试、哪家等面试。
 
-**EasyOffer 帮你复用一份个人资料，辅助填写网申，并把岗位和投递进度集中到一个工作台。**
+**EasyOffer 让 AI 分析招聘页面，按需读取你的个人资料，完成填写适配，并将岗位和投递进度同步到配套工作台。**
 
-| 填简历 | 记投递 | 看进度 |
-| --- | --- | --- |
-| 理解网页字段，优先填写资料库原文 | 从岗位页、投递记录页读取信息 | 按公司查看状态，一键打开官网 |
-| 需要限字或拆分时，AI 适配已有内容 | 同步岗位与官网当前状态 | 更新笔试、面试、Offer 等进度 |
+**读懂页面 → 调取资料 → 智能填写 → 同步进度**
+
+### AI 在其中做什么？
+
+| 环节 | EasyOffer 怎样帮你 |
+| --- | --- |
+| **理解页面** | 分析网页字段的含义、经历归属，以及岗位和当前投递状态 |
+| **调用资料** | 从个人资料库中找到对应经历，已有确认内容优先原样使用 |
+| **适配填写** | 遇到不同问法、字段拆分或字数限制，基于已有事实整理内容，填写后检查结果 |
+| **跟进投递** | 一键将官网岗位与状态同步到工作台，关联已有记录，集中查看进度 |
+
+填写和投递识别共用页面理解与模型调用能力，让 AI 参与完整流程。日期、下拉框等控件由执行模块操作，并配合回读检查与续填。
 
 ## 界面预览
 
@@ -37,7 +45,7 @@
 
 **准备：Chrome 或 Edge 浏览器；使用 AI 功能需要自己的模型 API Key。**
 
-1. **[下载插件 ZIP](https://github.com/Linyouju/EasyOffer/releases/download/v5.0.3/easyoffer-extension.zip)**，解压得到 `extension` 文件夹。
+1. **[下载插件 ZIP](https://github.com/Linyouju/EasyOffer/releases/download/v1.0.0/easyoffer-extension.zip)**，解压得到 `extension` 文件夹。
 2. 在浏览器地址栏输入 `chrome://extensions`（Edge 输入 `edge://extensions`），打开 **开发者模式**。
 3. 点击 **加载已解压的扩展程序**，选择 `extension` 文件夹。安装完成！
 
@@ -52,11 +60,21 @@
 
 [查看详细使用指南 →](docs/USAGE.md)
 
-## 当前版本 · 5.0.3 测试版
+## EasyOffer V1.0 正式版
 
-官网入口直接可点；投递状态可灵活切换；操作后支持 **8 秒撤销**；显示状态来源与最近官网检查时间。
+从整理个人资料，到填写网申、记录岗位，再到跟进笔试和面试，在浏览器中完成整套求职流程。
 
-[查看更新说明与下载文件 →](https://github.com/Linyouju/EasyOffer/releases/tag/v5.0.3)
+- **个人资料库**：集中维护教育、实习、项目和获奖经历，支持 Excel 导入导出、AI 整理简历。
+- **智能网申**：理解不同表单的问法，优先使用已确认资料；按需要适配日期、拆分内容或压缩字数，补充未填项。
+- **投递记录**：读取官网岗位和当前状态，关联已有记录，汇总到同一个工作台。
+- **求职工作台**：管理计划投递、已投递、笔试、面试、Offer 等进度，直接打开官网、手动更新状态并撤销误操作。
+- **进度来源与备份**：查看官网读取时间、区分手动更新，导出资料和投递记录。
+
+[下载 V1.0 正式版 →](https://github.com/Linyouju/EasyOffer/releases/tag/v1.0.0)
+
+## 后续扩展
+
+后续可探索飞书等可选通知渠道，用于每日提醒。当前版本使用浏览器内工作台；飞书接入需要另行开发和配置。
 
 ## 了解更多
 

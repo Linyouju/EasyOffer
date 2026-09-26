@@ -7,7 +7,9 @@ function copy(from,to){const data=fs.readFileSync(from);fs.mkdirSync(path.dirnam
 const allowed=JSON.parse(fs.readFileSync(path.join(__dirname,'extension-files.json')));
 for(const file of allowed){if(file.includes('..')||path.isAbsolute(file))throw Error('Invalid distribution path');copy(path.join(src,file),file);}
 for(const file of ['app.js','index.html','favicon.png','assets/easyoffer-logo.png','ui.js','ui.css','application-core.js','desk-client.js'])copy(path.join(root,'dist',file),'workbench/'+file);
-for(const file of ['README.md','PRIVACY.md','THIRD_PARTY_NOTICES.md'])copy(path.join(root,file),file);
+for(const file of ['README.md','PRIVACY.md','THIRD_PARTY_NOTICES.md','LICENSE'])copy(path.join(root,file),file);
+function copyDocs(dir){for(const e of fs.readdirSync(path.join(root,dir),{withFileTypes:true})){const f=path.join(dir,e.name);if(e.isDirectory())copyDocs(f);else copy(path.join(root,f),f);}}
+copyDocs('docs');
 for(const entry of fs.readdirSync(path.join(root,'licenses')))copy(path.join(root,'licenses',entry),'licenses/'+entry);
 const vendor=path.join(root,'vendor/sheetjs');const provenance=JSON.parse(fs.readFileSync(path.join(vendor,'provenance.json')));if(hash(fs.readFileSync(path.join(vendor,'xlsx.full.min.js')))!==provenance.sha256)throw Error('SheetJS checksum mismatch');
 copy(path.join(vendor,'xlsx.full.min.js'),'xlsx.full.min.js');copy(path.join(vendor,'LICENSE'),'licenses/SheetJS-LICENSE');

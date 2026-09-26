@@ -6,7 +6,7 @@
 
 ### 1. 下载并安装
 
-1. 打开 [下载页](https://github.com/Linyouju/EasyOffer/releases/tag/v5.0.3)，在 **Assets** 中下载 **easyoffer-extension.zip**。
+1. 打开 [下载页](https://github.com/Linyouju/EasyOffer/releases/tag/v1.0.0)，在 **Assets** 中下载 **easyoffer-extension.zip**。
 2. 解压文件，得到 `extension` 文件夹。
 3. 在浏览器地址栏输入：Chrome 用 `chrome://extensions`，Edge 用 `edge://extensions`。
 4. 打开右上角的 **开发者模式**，点击 **加载已解压的扩展程序**，选择刚才的 `extension` 文件夹。

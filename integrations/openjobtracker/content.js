@@ -2669,7 +2669,7 @@
   // ============ 消息监听 ============
   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
     const listener=(message, sender, sendResponse) => {
-      if(message.type==='OJT_VERSION'){sendResponse({version:'5.0.3'});return;}
+      if(message.type==='OJT_VERSION'){sendResponse({version:'1.0.0'});return;}
       if (message.type === 'FILL_FORM') {
         fillForm()
           .then((res) => sendResponse({ ok: res.filledCount > 0, ...res }))

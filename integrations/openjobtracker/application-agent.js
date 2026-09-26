@@ -1,7 +1,7 @@
 /* A bounded observe -> plan -> execute -> verify controller. No submission action exists. */
 (function(root){
  'use strict';
- const VERSION='5.0.3';
+ const VERSION='1.0.0';
  const terminal=/提交|投递|申请|确认并|保存并|完成|支付|同意|submit|apply|finish|accept/i;
  function safeAction(action){
    const label=String(action?.label||'').trim();

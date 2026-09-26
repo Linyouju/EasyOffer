@@ -1,10 +1,10 @@
 /* Browser adapter. Uses existing tested control writers, with independent mapping checks. */
 (()=>{
  if(!globalThis.OJTFormCore||!globalThis.ApplicationAgent)return;
- if(globalThis.__ojtAgentVersion==='5.0.3')return;
+ if(globalThis.__ojtAgentVersion==='1.0.0')return;
  globalThis.__ojtAgentStop?.();
  document.querySelectorAll('#ojt-application-agent').forEach(el=>el.remove());
- globalThis.__ojtAgentVersion='5.0.3';
+ globalThis.__ojtAgentVersion='1.0.0';
  if(globalThis.__ojtAgentListener)chrome.runtime.onMessage.removeListener(globalThis.__ojtAgentListener);
  const core=globalThis.OJTFormCore,mapper=globalThis.SemanticMapper;
  const visible=el=>el.isConnected&&!el.disabled&&(el.getClientRects().length>0)&&getComputedStyle(el).visibility!=='hidden';
